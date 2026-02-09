@@ -335,7 +335,7 @@ rag-ollama-app/
 #### **System Actors**
 
 1. **LLM API Service**
-   - Role: Provides LLM inference and embedding generation through external API
+   - Role: Provides LLM inference and embedding generation via an external API
    - Interface: REST API (configurable via environment variables for authentication and endpoint)
 
 2. **Vector Database**
