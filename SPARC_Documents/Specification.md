@@ -214,7 +214,7 @@ RAG is a technique that enhances large language model accuracy by retrieving rel
 ### **File Structure Proposal**
 
 ```
-rag-ollama-app/
+rag-api-app/
 ├── README.md
 ├── requirements.txt
 ├── .env.example
@@ -233,14 +233,14 @@ rag-ollama-app/
 │   ├── embeddings/
 │   │   ├── __init__.py
 │   │   ├── embedding_generator.py
-│   │   └── ollama_client.py
+│   │   └── api_client.py
 │   ├── vector_store/
 │   │   ├── __init__.py
 │   │   ├── vector_db.py     # Vector database interface
 │   │   └── retriever.py     # Retrieval logic
 │   ├── llm/
 │   │   ├── __init__.py
-│   │   ├── ollama_llm.py    # LLM interaction
+│   │   ├── llm_api.py       # LLM interaction via API
 │   │   └── prompt_templates.py
 │   ├── api/
 │   │   ├── __init__.py
