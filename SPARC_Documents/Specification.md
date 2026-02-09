@@ -1,7 +1,3 @@
-Excellent! I now have all the information needed to create comprehensive SPARC documentation for your local RAG application. Let me build this out for you.
-
----
-
 # SPARC Documentation: Web-Based RAG Application with Ollama
 
 ## **S - SPECIFICATION**
@@ -9,7 +5,7 @@ Excellent! I now have all the information needed to create comprehensive SPARC d
 ### **Project Overview**
 
 #### **Project Goal**
-Develop a web-based, privacy-focused Retrieval-Augmented Generation (RAG) application that enables users to perform intelligent question-answering against a large knowledge base of documents (7,500+) through a REST API. The system will use Ollama for LLM inference (either locally or remotely hosted) and provide transparent source attribution through a web-based chat interface accessible over the internet.
+Develop a web-based, privacy-focused Retrieval-Augmented Generation (RAG) application that enables users to perform intelligent question-answering against a large knowledge base of documents (7,500+) through a REST API.
 
 #### **Context and Background**
 RAG is a technique that enhances large language model accuracy by retrieving relevant information from external knowledge sources before generating responses . By combining retrieval-based and generation-based methods, RAG systems first retrieve relevant documents from a knowledge base and then use that information to generate contextually accurate answers .
