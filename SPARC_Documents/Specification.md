@@ -283,9 +283,9 @@ rag-ollama-app/
 
 ### **Assumptions**
 
-1. **Ollama Installation**: Ollama is pre-installed and configured on the local server (If this is the case then should we remove the api/ folder from above?)
-   - *Justification*: Required for local LLM inference
-   - *Impact*: Deployment documentation must include Ollama setup instructions
+1. **API Integration**: The application will use an external API for LLM inference
+   - *Justification*: Provides flexibility and scalability without local LLM installation requirements
+   - *Impact*: Deployment documentation must include API configuration and authentication setup
 
 2. **Document Quality**: Uploaded documents contain extractable text (not scanned images)
    - *Justification*: OCR adds significant complexity
