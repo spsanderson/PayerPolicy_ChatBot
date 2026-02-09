@@ -525,21 +525,33 @@ END FUNCTION
 
 ```
 FUNCTION generate_embedding(text):
-    // Step 1: Prepare request to Ollama
+    // Step 1: Prepare request to external LLM API
     request = {
-        model: "nomic-embed-text",
-        prompt: text
+        model: "${EMBEDDING_MODEL}",  // e.g., "text-embedding-ada-002" for OpenAI
+        input: text
     }
     
-    // Step 2: Call Ollama API
-    TRY:
-        response = http_post("${OLLAMA_BASE_URL}/api/embeddings", request)
-        embedding = response.embedding
-    CATCH OllamaConnectionError:
-        LOG_ERROR("Ollama service unavailable")
-        RETRY with exponential_backoff(max_retries=3)
+    // Step 2: Add authentication headers
+    headers = {
+        "Authorization": "Bearer ${API_KEY}",
+        "Content-Type": "application/json"
+    }
     
-    // Step 3: Normalize embedding (optional)
+    // Step 3: Call external LLM API
+    TRY:
+        response = http_post("${LLM_API_BASE_URL}/embeddings", request, headers)
+        embedding = response.data[0].embedding
+    CATCH APIConnectionError:
+        LOG_ERROR("External LLM API unavailable")
+        RETRY with exponential_backoff(max_retries=3)
+    CATCH APIAuthenticationError:
+        LOG_ERROR("API authentication failed - check API key")
+        RAISE AuthenticationError
+    CATCH APIRateLimitError:
+        LOG_WARN("API rate limit reached")
+        RETRY with exponential_backoff(max_retries=3, base_delay=5)
+    
+    // Step 4: Normalize embedding (optional)
     normalized_embedding = normalize_vector(embedding)
     
     RETURN normalized_embedding
@@ -634,29 +646,48 @@ END FUNCTION
 
 ```
 FUNCTION generate_llm_response(prompt):
-    // Step 1: Prepare request
+    // Step 1: Prepare request to external LLM API
     request = {
-        model: "llama2",  // or mistral, or other model
-        prompt: prompt,
+        model: "${LLM_MODEL}",  // e.g., "gpt-4", "claude-3-sonnet", etc.
+        messages: [
+            {
+                role: "user",
+                content: prompt
+            }
+        ],
         stream: true,
-        options: {
-            temperature: 0.7,
-            top_p: 0.9,
-            max_tokens: 1000
-        }
+        temperature: 0.7,
+        top_p: 0.9,
+        max_tokens: 1000
     }
     
-    // Step 2: Stream response
+    // Step 2: Add authentication headers
+    headers = {
+        "Authorization": "Bearer ${API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    // Step 3: Stream response from external API
     response_text = ""
     TRY:
-        stream = http_post_stream("${OLLAMA_BASE_URL}/api/generate", request)
+        stream = http_post_stream("${LLM_API_BASE_URL}/chat/completions", request, headers)
         
         FOR EACH chunk IN stream:
-            token = chunk.response
-            response_text += token
-            yield token  // Stream to frontend
+            IF chunk.choices AND chunk.choices[0].delta.content:
+                token = chunk.choices[0].delta.content
+                response_text += token
+                yield token  // Stream to frontend
             
-    CATCH OllamaError as e:
+    CATCH APIConnectionError as e:
+        LOG_ERROR("External LLM API connection failed", e)
+        RETURN "I apologize, but I encountered an error connecting to the LLM service."
+    CATCH APIAuthenticationError as e:
+        LOG_ERROR("API authentication failed", e)
+        RETURN "I apologize, but there was an authentication error with the LLM service."
+    CATCH APIRateLimitError as e:
+        LOG_WARN("API rate limit reached", e)
+        RETURN "I apologize, but the service is temporarily at capacity. Please try again shortly."
+    CATCH APIError as e:
         LOG_ERROR("LLM generation failed", e)
         RETURN "I apologize, but I encountered an error generating a response."
     
