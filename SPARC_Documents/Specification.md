@@ -213,6 +213,7 @@ RAG is a technique that enhances large language model accuracy by retrieving rel
 
 ### **File Structure Proposal**
 
+Note: Earlier versions of this document referred to the project root as `rag-ollama-app/`. Any remaining references to `rag-ollama-app` and Ollama-specific paths or environment variables (for example, `OLLAMA_BASE_URL` or systemd/nginx paths) refer to this same `rag-api-app` project and deployment.
 ```
 rag-api-app/
 ├── README.md
