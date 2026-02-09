@@ -391,7 +391,7 @@ rag-api-app/
 - **PC3**: Document processing speed limited by application server CPU availability
 
 #### **Legal/Compliance Constraints**
-- **LC1**: Must maintain data privacy (documents stored locally, only queries sent to API)
+- **LC1**: Must maintain data privacy (documents stored on the application server; only the user query and the minimal necessary retrieved document excerpts/metadata are sent to the external LLM API, with any PII or other sensitive fields redacted or anonymized before transmission)
 - **LC2**: Document access must be auditable
 - **LC3**: Must comply with organizational data retention policies
 - **LC4**: API usage must comply with provider's terms of service and data handling policies
