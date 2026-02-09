@@ -132,31 +132,7 @@ RAG is a technique that enhances large language model accuracy by retrieving rel
 
 ### **User Scenarios and User Flows**
 
-#### **Scenario 1: First-Time Document Upload**
-
-**Actor**: Sarah (Research Analyst)
-
-**Goal**: Index a collection of research reports for future querying
-
-**Flow**: (Comment: The use case does not align with what we are trying to achieve)
-1. Sarah navigates to the web application
-2. Clicks "Upload Documents" button
-3. Selects 50 PDF research reports from her local drive
-4. System validates file types and sizes
-5. Upload progress bar displays
-6. System begins processing documents in background
-7. Indexing status updates in real-time
-8. Notification appears when indexing completes
-9. Documents appear in "Indexed Documents" list
-
-**Decision Points**:
-- If invalid file type detected → Show error, allow re-selection
-- If file too large → Show warning, skip file, continue with others
-- If Ollama service unavailable → Queue documents, retry automatically
-
----
-
-#### **Scenario 2: Asking a Question**
+#### **Scenario 1: Asking a Question**
 
 **Actor**: Mike (Compliance Officer)
 
@@ -180,7 +156,7 @@ RAG is a technique that enhances large language model accuracy by retrieving rel
 
 ---
 
-#### **Scenario 3: Managing Document Collection**
+#### **Scenario 2: Managing Document Collection**
 
 **Actor**: Dev Team Member
 
