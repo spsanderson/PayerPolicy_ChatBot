@@ -380,24 +380,25 @@ rag-api-app/
 ### **Constraints**
 
 #### **Technical Constraints**
-- **TC1**: Must use Ollama (no external API calls)
-- **TC2**: All processing must occur on local server
+- **TC1**: Must use external LLM API for model inference
+- **TC2**: All document processing must occur on application server
 - **TC3**: Vector database must support web-based deployment
 - **TC4**: Limited to document types with text extraction capabilities
 
 #### **Performance Constraints**
-- **PC1**: Response time limited by local hardware capabilities
-- **PC2**: Concurrent user limit based on server resources
-- **PC3**: Document processing speed limited by CPU/GPU availability
+- **PC1**: Response time dependent on API latency and application server capabilities
+- **PC2**: Concurrent user limit based on server resources and API rate limits
+- **PC3**: Document processing speed limited by application server CPU availability
 
 #### **Legal/Compliance Constraints**
-- **LC1**: Must maintain data privacy (no external data transmission)
+- **LC1**: Must maintain data privacy (documents stored locally, only queries sent to API)
 - **LC2**: Document access must be auditable
 - **LC3**: Must comply with organizational data retention policies
+- **LC4**: API usage must comply with provider's terms of service and data handling policies
 
 #### **Budgetary Constraints**
-- **BC1**: No licensing costs for external APIs
-- **BC2**: Open-source software preferred
+- **BC1**: API costs must be managed through rate limiting and usage monitoring
+- **BC2**: Open-source software preferred for application components
 - **BC3**: Hardware costs limited to existing server infrastructure
 
 ---
