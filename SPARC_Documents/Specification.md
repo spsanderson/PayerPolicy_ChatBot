@@ -213,8 +213,9 @@ RAG is a technique that enhances large language model accuracy by retrieving rel
 
 ### **File Structure Proposal**
 
+Note: Earlier versions of this document referred to the project root as `rag-ollama-app/`. Any remaining references to `rag-ollama-app` and Ollama-specific paths or environment variables (for example, `OLLAMA_BASE_URL` or systemd/nginx paths) refer to this same `rag-api-app` project and deployment.
 ```
-rag-ollama-app/
+rag-api-app/
 ├── README.md
 ├── requirements.txt
 ├── .env.example
@@ -233,14 +234,14 @@ rag-ollama-app/
 │   ├── embeddings/
 │   │   ├── __init__.py
 │   │   ├── embedding_generator.py
-│   │   └── ollama_client.py
+│   │   └── api_client.py
 │   ├── vector_store/
 │   │   ├── __init__.py
 │   │   ├── vector_db.py     # Vector database interface
 │   │   └── retriever.py     # Retrieval logic
 │   ├── llm/
 │   │   ├── __init__.py
-│   │   ├── ollama_llm.py    # LLM interaction
+│   │   ├── llm_api.py       # LLM interaction via API
 │   │   └── prompt_templates.py
 │   ├── api/
 │   │   ├── __init__.py
