@@ -257,8 +257,6 @@ rag-ollama-app/
 │   ├── document_processor/
 │   │   ├── __init__.py
 │   │   ├── pdf_processor.py
-│   │   ├── excel_processor.py
-│   │   ├── text_extractor.py
 │   │   └── chunker.py       # Document chunking logic
 │   ├── embeddings/
 │   │   ├── __init__.py
@@ -313,7 +311,7 @@ rag-ollama-app/
 
 ### **Assumptions**
 
-1. **Ollama Installation**: Ollama is pre-installed and configured on the local server
+1. **Ollama Installation**: Ollama is pre-installed and configured on the local server (If this is the case then should we remove the api/ folder from above?)
    - *Justification*: Required for local LLM inference
    - *Impact*: Deployment documentation must include Ollama setup instructions
 
@@ -333,7 +331,7 @@ rag-ollama-app/
    - *Justification*: Required for vector database and LLM operations
    - *Impact*: Hardware requirements must be documented
 
-6. **User Authentication**: Basic authentication is sufficient (not enterprise SSO)
+6. **User Authentication**: Basic authentication is sufficient (not enterprise SSO) (Or microsoft windows authentication?)
    - *Justification*: Reduces initial complexity
    - *Impact*: Can integrate with existing auth systems later
 
@@ -396,15 +394,12 @@ rag-ollama-app/
 - GPU: Optional but recommended for faster inference
 
 #### **Personnel**
-- 1 Backend Developer (Python/Flask)
-- 1 Frontend Developer (HTML/CSS/JavaScript)
-- 1 DevOps Engineer (deployment and maintenance)
-- Part-time UX Designer (interface design)
+- 2 Developer
 
 #### **Development Tools**
 - Git for version control
 - VS Code or PyCharm
-- Postman for API testing
+- Postman for API testing (Do we need this, if so why?)
 - Docker for containerization (optional)
 
 ---
@@ -457,19 +452,15 @@ RAG combines the benefits of retrieval-based systems (factual accuracy, source a
 - *Risk*: Slow retrieval with 7,500+ documents
 - *Mitigation*: Use efficient vector database with indexing, implement caching, consider hierarchical retrieval
 
-**Challenge 2: Excel File Complexity**
-- *Risk*: Complex spreadsheets with multiple sheets, formulas, charts
-- *Mitigation*: Extract text content only, handle each sheet separately, provide clear error messages for unsupported features
-
-**Challenge 3: Context Window Limitations**
+**Challenge 2: Context Window Limitations**
 - *Risk*: Retrieved chunks may exceed LLM context window
 - *Mitigation*: Implement intelligent chunk selection, summarize long contexts, use models with larger context windows
 
-**Challenge 4: Answer Quality**
+**Challenge 3: Answer Quality**
 - *Risk*: Generated answers may be inaccurate or hallucinated
 - *Mitigation*: Implement confidence scoring, show source passages, allow user feedback, use prompt engineering techniques
 
-**Challenge 5: Resource Contention**
+**Challenge 4: Resource Contention**
 - *Risk*: Multiple concurrent users may overwhelm server
 - *Mitigation*: Implement request queuing, rate limiting, resource monitoring, graceful degradation
 
