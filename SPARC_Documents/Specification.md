@@ -352,7 +352,7 @@ rag-ollama-app/
 
 #### **Software Requirements**
 - Python 3.10+
-- Ollama (with nomic-embed-text and llama2/mistral models)
+- External LLM API access (e.g., OpenAI, Anthropic, or similar)
 - Flask 3.0+
 - Vector database library (ChromaDB or FAISS)
 - PyPDF2 or pdfplumber for PDF processing
@@ -360,10 +360,10 @@ rag-ollama-app/
 - langchain or llamaindex (optional, for RAG orchestration)
 
 #### **Hardware Requirements**
-- CPU: 8+ cores recommended
-- RAM: 16GB minimum, 32GB recommended
-- Storage: 100GB+ SSD
-- GPU: Optional but recommended for faster inference
+- CPU: 4+ cores recommended
+- RAM: 8GB minimum, 16GB recommended
+- Storage: 50GB+ SSD
+- GPU: Not required (using external API)
 
 #### **Personnel**
 - 2 Developer
