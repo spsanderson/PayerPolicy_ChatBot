@@ -8,7 +8,7 @@ Finalize the RAG Ollama Application with comprehensive deployment instructions, 
 
 ## Introduction
 
-The RAG Ollama Application is a production-ready, privacy-focused document question-answering system that leverages Retrieval-Augmented Generation (RAG) technology to provide accurate, cited answers from your document collection. Built entirely for local deployment, it ensures complete data privacy while delivering enterprise-grade performance.
+The RAG Ollama Application is a production-ready, privacy-focused document question-answering system that leverages Retrieval-Augmented Generation (RAG) technology to provide accurate, cited answers from your document collection. Built for flexible web-based deployment, it ensures complete data security while delivering enterprise-grade performance.
 
 ### What is RAG Ollama Application?
 
@@ -16,7 +16,7 @@ RAG Ollama Application combines the power of semantic search with large language
 
 ### Key Characteristics
 
-- **Privacy-First**: All processing occurs locally—no data ever leaves your server
+- **Privacy-First**: All processing occurs on the server—no data ever leaves your infrastructure
 - **Source Transparency**: Every answer includes citations to source documents
 - **Scalable**: Handles collections of 7,500+ documents efficiently
 - **User-Friendly**: Intuitive web interface requiring minimal training
@@ -88,7 +88,7 @@ RAG Ollama Application combines the power of semantic search with large language
 - No external API calls or data transmission
 - GDPR and compliance-friendly architecture
 - Audit trails for all operations
-- On-premises deployment option
+- Cloud/web-based or on-premises deployment option
 
 **Cost Efficiency**
 
@@ -295,7 +295,7 @@ SECRET_KEY=your-generated-secret-key-here
 LOG_LEVEL=INFO
 
 # Ollama
-OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_BASE_URL=https://ollama.example.com  # Or http://localhost:11434 for local
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 OLLAMA_LLM_MODEL=llama2
 
@@ -349,13 +349,13 @@ python src/app.py
 # WARNING: This is a development server. Do not use it in production.
 # * Running on http://127.0.0.1:5000
 # Initializing Ollama client...
-# Connected to Ollama at http://localhost:11434
+# Connected to Ollama at ${OLLAMA_BASE_URL}
 # Initializing ChromaDB...
 # ChromaDB initialized at ./data/vector_db
 # Application ready!
 
 # In another terminal, test health endpoint
-curl http://localhost:5000/api/health | jq
+curl ${API_BASE_URL}/api/health | jq
 
 # Expected response:
 # {
@@ -385,7 +385,7 @@ source venv/bin/activate
 # Run with Flask development server
 python src/app.py
 
-# Access application at http://localhost:5000
+# Access application at ${API_BASE_URL} (configure in environment variables)
 ```
 
 ### Production Deployment
@@ -411,7 +411,7 @@ SECRET_KEY=your-production-secret-key-min-32-chars
 LOG_LEVEL=WARNING
 
 # Ollama
-OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_BASE_URL=https://ollama.example.com  # Or http://localhost:11434 for local
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 OLLAMA_LLM_MODEL=llama2
 OLLAMA_TIMEOUT=60
@@ -712,7 +712,461 @@ docker-compose down
 
 ---
 
-## Usage
+### Cloud Deployment Options
+
+#### AWS Deployment
+
+**Using AWS EC2 and ECS:**
+
+```bash
+# 1. Launch EC2 instance (Ubuntu 20.04+, t3.xlarge or larger)
+# Configure security group: Allow ports 80, 443, 5000
+
+# 2. SSH into instance and run deployment script
+ssh -i your-key.pem ubuntu@your-ec2-ip
+
+# 3. Follow standard deployment steps above
+
+# 4. Configure Application Load Balancer for HTTPS
+# - Create target group pointing to EC2 instance port 5000
+# - Configure SSL certificate via AWS Certificate Manager
+# - Set up health checks to /api/health
+```
+
+**Using Docker on AWS ECS:**
+
+```yaml
+# ecs-task-definition.json
+{
+  "family": "rag-ollama-app",
+  "containerDefinitions": [
+    {
+      "name": "rag-app",
+      "image": "your-ecr-repo/rag-ollama-app:latest",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "OLLAMA_BASE_URL",
+          "value": "https://ollama.example.com"
+        },
+        {
+          "name": "API_BASE_URL",
+          "value": "https://api.example.com"
+        }
+      ],
+      "memory": 4096,
+      "cpu": 2048
+    }
+  ]
+}
+```
+
+#### Azure Deployment
+
+**Using Azure App Service:**
+
+```bash
+# 1. Create resource group
+az group create --name rag-app-rg --location eastus
+
+# 2. Create App Service plan
+az appservice plan create --name rag-app-plan --resource-group rag-app-rg --sku P1V2 --is-linux
+
+# 3. Create web app
+az webapp create --resource-group rag-app-rg --plan rag-app-plan --name rag-ollama-app --runtime "PYTHON:3.10"
+
+# 4. Configure environment variables
+az webapp config appsettings set --resource-group rag-app-rg --name rag-ollama-app --settings \
+  OLLAMA_BASE_URL="https://ollama.example.com" \
+  API_BASE_URL="https://rag-ollama-app.azurewebsites.net"
+
+# 5. Deploy application
+az webapp up --name rag-ollama-app --resource-group rag-app-rg
+```
+
+#### Google Cloud Platform (GCP) Deployment
+
+**Using Cloud Run:**
+
+```bash
+# 1. Build container image
+gcloud builds submit --tag gcr.io/your-project-id/rag-ollama-app
+
+# 2. Deploy to Cloud Run
+gcloud run deploy rag-ollama-app \
+  --image gcr.io/your-project-id/rag-ollama-app \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars OLLAMA_BASE_URL=https://ollama.example.com,API_BASE_URL=https://your-app-url.run.app \
+  --memory 4Gi \
+  --cpu 2 \
+  --timeout 300
+
+# 3. Configure custom domain and SSL (optional)
+gcloud run domain-mappings create --service rag-ollama-app --domain api.example.com
+```
+
+#### Kubernetes Deployment
+
+**Kubernetes manifests:**
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-ollama-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rag-ollama-app
+  template:
+    metadata:
+      labels:
+        app: rag-ollama-app
+    spec:
+      containers:
+      - name: rag-app
+        image: your-registry/rag-ollama-app:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: OLLAMA_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: ollama_base_url
+        - name: API_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: api_base_url
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-ollama-app-service
+spec:
+  selector:
+    app: rag-ollama-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  ollama_base_url: "https://ollama.example.com"
+  api_base_url: "https://api.example.com"
+```
+
+**Deploy to Kubernetes:**
+
+```bash
+# Apply configurations
+kubectl apply -f deployment.yaml
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods
+kubectl get services
+
+# View logs
+kubectl logs -f deployment/rag-ollama-app
+```
+
+---
+
+### CORS Configuration
+
+For web-based deployments with frontend clients on different domains:
+
+**Add CORS middleware to Flask app:**
+
+```python
+# src/app.py or src/middleware/cors.py
+from flask_cors import CORS
+
+# Configure CORS
+CORS(app, resources={
+    r"/api/*": {
+        "origins": os.getenv("CORS_ORIGINS", "*").split(","),
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True,
+        "max_age": 3600
+    }
+})
+```
+
+**Environment variable configuration:**
+
+```bash
+# .env
+CORS_ORIGINS=https://app.example.com,https://www.example.com
+# For development, use: CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+```
+
+**Install flask-cors:**
+
+```bash
+pip install flask-cors
+```
+
+---
+
+### SSL/TLS Configuration
+
+#### Using Nginx as Reverse Proxy with SSL
+
+**Nginx configuration (`/etc/nginx/sites-available/rag-app`):**
+
+```nginx
+server {
+    listen 80;
+    server_name api.example.com;
+    
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    # SSL certificates (use Let's Encrypt certbot)
+    ssl_certificate /etc/letsencrypt/live/api.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+    
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Proxy settings
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket support for streaming
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Timeouts
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+
+    # Rate limiting
+    limit_req zone=api_limit burst=20 nodelay;
+    
+    # File upload size limit
+    client_max_body_size 100M;
+}
+
+# Rate limiting zone definition (add to nginx.conf http block)
+# limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+```
+
+**Install and configure SSL with Let's Encrypt:**
+
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtain SSL certificate
+sudo certbot --nginx -d api.example.com
+
+# Enable auto-renewal
+sudo certbot renew --dry-run
+
+# Enable Nginx configuration
+sudo ln -s /etc/nginx/sites-available/rag-app /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+### Environment Variables for Web Deployment
+
+**Complete environment configuration for production:**
+
+```bash
+# Application
+APP_NAME=RAG Ollama App
+ENVIRONMENT=production
+DEBUG=False
+SECRET_KEY=your-production-secret-key-min-32-chars
+LOG_LEVEL=WARNING
+
+# API Configuration
+API_BASE_URL=https://api.example.com
+API_HOST=api.example.com
+
+# Ollama Configuration
+OLLAMA_BASE_URL=https://ollama.example.com
+# Alternative: http://localhost:11434 for local Ollama
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_LLM_MODEL=llama2
+OLLAMA_TIMEOUT=60
+
+# CORS Configuration
+CORS_ORIGINS=https://app.example.com,https://www.example.com
+CORS_ALLOW_CREDENTIALS=true
+
+# Security
+TOKEN_EXPIRY_SECONDS=3600
+MAX_REQUESTS_PER_HOUR=100
+ENABLE_RATE_LIMITING=True
+ENABLE_HTTPS=True
+SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_HTTPONLY=True
+SESSION_COOKIE_SAMESITE=Lax
+
+# Performance
+MAX_CONCURRENT_REQUESTS=10
+BATCH_SIZE=32
+CACHE_TTL_SECONDS=3600
+WORKER_PROCESSES=4
+
+# Database
+DATABASE_URL=postgresql://{{username}}:{{password}}@{{hostname}}:{{port}}/{{database}}  # Use secrets manager for credentials
+# Or: sqlite:///data/rag.db for simple deployments
+# Production: Use AWS Secrets Manager, Azure Key Vault, or GCP Secret Manager
+
+# Storage
+UPLOAD_FOLDER=/app/data/uploads
+PROCESSED_FOLDER=/app/data/processed
+VECTOR_DB_PATH=/app/data/vector_db
+
+# Monitoring
+ENABLE_METRICS=True
+METRICS_PORT=9090
+SENTRY_DSN=https://{{sentry-key}}@sentry.io/{{project-id}}  # Optional
+```
+
+---
+
+### API Security for Public Web Access
+
+**Implement authentication and authorization:**
+
+```python
+# src/middleware/auth.py
+from functools import wraps
+from flask import request, jsonify
+import jwt
+import os
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+        if not api_key or api_key != os.getenv('API_KEY'):
+            return jsonify({'error': 'Invalid API key'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def require_jwt(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not token:
+            return jsonify({'error': 'Missing token'}), 401
+        try:
+            payload = jwt.decode(token, os.getenv('JWT_SECRET'), algorithms=['HS256'])
+            request.user = payload
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+```
+
+**Apply to routes:**
+
+```python
+from src.middleware.auth import require_api_key, require_jwt
+
+@app.route('/api/chat', methods=['POST'])
+@require_jwt
+def chat():
+    # Protected endpoint
+    pass
+
+@app.route('/api/documents/upload', methods=['POST'])
+@require_api_key
+def upload_document():
+    # Protected endpoint
+    pass
+```
+
+**Rate limiting configuration:**
+
+```python
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour", "10 per minute"],
+    storage_uri=os.getenv("REDIS_URL", "redis://localhost:6379")  # Or memory:// for simple setups
+)
+
+@app.route('/api/chat', methods=['POST'])
+@limiter.limit("20 per minute")
+def chat():
+    pass
+```
+
+```bash
+# Install dependencies
+pip install flask-cors pyjwt flask-limiter redis
 
 ### First-Time Setup
 
@@ -722,7 +1176,7 @@ docker-compose down
    # Open browser and navigate to:
    https://your-domain.com
    # Or for local development:
-   http://localhost:5000
+   ${API_BASE_URL}
    ```
 2. **Log In**
 
@@ -1118,7 +1572,7 @@ global:
 scrape_configs:
   - job_name: 'rag-app'
     static_configs:
-      - targets: ['localhost:5000']
+      - targets: ['${API_HOST}:5000']  # Configure via environment variable
     metrics_path: '/metrics'
 EOF
 
@@ -1267,7 +1721,7 @@ sudo systemctl restart rag-app
 systemctl status ollama
 
 # Test Ollama directly
-curl http://localhost:11434/api/tags
+curl ${OLLAMA_BASE_URL}/api/tags
 
 # Check Ollama logs
 journalctl -u ollama -n 50
@@ -1516,7 +1970,7 @@ grep "ERROR" /opt/rag-app/logs/app.log | wc -l
 tail -50 /opt/rag-app/logs/error.log
 
 # Check system health
-curl http://localhost:5000/api/health
+curl ${API_BASE_URL}/api/health
 ```
 
 **Solutions:**
@@ -1866,7 +2320,7 @@ python scripts/validate_config.py
 sudo systemctl start rag-app
 
 # Verify upgrade
-curl http://localhost:5000/api/health
+curl ${API_BASE_URL}/api/health
 python scripts/version_check.py
 ```
 
@@ -1994,8 +2448,8 @@ python scripts/clear_caches.py
 python scripts/backup.sh
 
 # Monitoring
-curl http://localhost:5000/api/health
-curl http://localhost:5000/metrics
+curl ${API_BASE_URL}/api/health
+curl ${API_BASE_URL}/metrics
 htop
 df -h
 ```
