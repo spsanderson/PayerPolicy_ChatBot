@@ -7,7 +7,7 @@ from payer_policy import provenance
 class FingerprintTests(unittest.TestCase):
     """Check stable content identity independently of document metadata."""
 
-    def test_rejects_non_bytes(self):
+    def test_rejects_non_bytes(self) -> None:
         """Reject mutable buffers and implicit string encoding."""
         for value in ("abc", bytearray(b"abc"), None, 123):
             with self.subTest(value=value):
