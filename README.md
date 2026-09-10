@@ -42,8 +42,9 @@ a development requirement, not the intended end-user installation experience.
 
 ## Architecture and delivery
 
-- [Architecture diagram](docs/architecture.html): download/open in any modern
-  browser; entirely offline, with implemented and planned states distinguished.
+- [Architecture diagram](docs/architecture.md): Markdown with a Mermaid diagram
+  and component table, distinguishing implemented and planned states.
+  The original HTML remains available as an offline snapshot.
 - [Incremental delivery plan](docs/implementation-plan.md): phases, modules,
   function contracts, acceptance gates, and next increment.
 - [Development conventions](CONTRIBUTING.md): small test-first changes and living
@@ -74,7 +75,8 @@ compliant.
 payer_policy/provenance.py      Content fingerprint function
 payer_policy/source_registry.py Source definition validator
 tests/                          Offline unit tests
-docs/architecture.html          Offline system diagram
+docs/architecture.md            Maintained Markdown system diagram
+docs/architecture.html          Original offline HTML snapshot
 docs/implementation-plan.md     Living delivery plan
 docs/source-definition.md       Validator contract and example
 ```
