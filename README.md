@@ -11,6 +11,9 @@ administration of the NYSHIP Empire Plan Hospital Program.
 
 - `payer_policy.provenance.fingerprint_document(content: bytes) -> str`:
   SHA-256 fingerprint of exact document bytes, with explicit input validation.
+- `payer_policy.source_registry.validate_source_definition(source) -> list[str]`:
+  checks required metadata, identifiers, URLs, and applicability status without
+  changing inputs or accessing the network. See the [source contract](docs/source-definition.md).
 - Standard-library unit tests. No third-party dependencies for this increment.
 
 A fingerprint identifies content, not authenticity or plan applicability.
@@ -66,10 +69,12 @@ compliant.
 ## Repository layout
 
 ```text
-payer_policy/provenance.py    Implemented content fingerprint function
- tests/test_provenance.py     Unit tests (under tests/)
- docs/architecture.html      Offline system diagram
- docs/implementation-plan.md Living delivery plan
+payer_policy/provenance.py      Content fingerprint function
+payer_policy/source_registry.py Source definition validator
+tests/                          Offline unit tests
+docs/architecture.html          Offline system diagram
+docs/implementation-plan.md     Living delivery plan
+docs/source-definition.md       Validator contract and example
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and

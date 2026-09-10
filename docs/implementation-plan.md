@@ -24,13 +24,21 @@ Implemented function:
 - Does not establish trust, validity, dates, or applicability.
 - Tests: known standard digest and invalid input contract.
 
-Next increment: source registry, starting with one reviewed source definition.
-Proposed small behaviors (not implemented):
+### Module 2: Source registry — validation implemented
 
-- Validate a source definition's required metadata and URL structure.
-- Load a reviewed registry without changing identifiers or source URLs.
-- Retain explicit applicability status, evidence URL, source family, and access
-  restrictions. Source-level trust is not document-level applicability.
+`validate_source_definition(source: object) -> List[str]` checks required
+metadata, stable ID format, HTTP(S) URL structure, and applicability status.
+It returns field-prefixed errors and leaves the input untouched. Explicit
+unknown applicability is accepted; confirmed applicability requires an evidence
+URL, whose truth is not automatically verified. See [contract](source-definition.md).
+
+Verified: 7 test methods across provenance and registry, including parameterized
+invalid-input cases. Tests run offline; no official source has been loaded.
+
+Next increment (not implemented): load a reviewed registry containing one
+official source entry. Preserve exact identifiers/URLs and reject duplicate
+IDs. Record source review evidence; source-level trust is not document-level
+applicability.
 
 Registry URL validation is not a complete network security boundary. The later
 fetcher must validate redirects, resolved addresses, response size, MIME/content,
