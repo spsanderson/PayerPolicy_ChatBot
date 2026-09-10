@@ -22,7 +22,8 @@ strings are present. Extra fields are currently ignored, not removed.
 | evidence_url | Required string; may be empty unless confirmed_applicable |
 | access_restrictions | Nonblank access notes; use an explicit unreviewed note when unknown |
 
-URLs cannot contain credentials, whitespace/control characters, backslashes,
+URLs cannot contain credentials, whitespace/control characters (including
+DEL and the full U+0080–U+009F C1 range), backslashes,
 malformed percent escapes, or invalid ports. DNS-style host labels are checked;
 IPv6 literals and unencoded internationalized hostnames are not supported in
 this first contract. Original casing, encoding, paths, and query values remain

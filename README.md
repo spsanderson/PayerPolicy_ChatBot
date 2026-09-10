@@ -14,6 +14,8 @@ administration of the NYSHIP Empire Plan Hospital Program.
 - `payer_policy.source_registry.validate_source_definition(source) -> list[str]`:
   checks required metadata, identifiers, URLs, and applicability status without
   changing inputs or accessing the network. See the [source contract](docs/source-definition.md).
+- URL checks reject DEL and C1 control characters in both source and evidence
+  URLs; regression tests cover the entire U+007F–U+009F range.
 - Standard-library unit tests. No third-party dependencies for this increment.
 
 A fingerprint identifies content, not authenticity or plan applicability.

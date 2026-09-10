@@ -45,7 +45,10 @@ def validate_source_definition(source: object) -> List[str]:
             continue
         try:
             # Inspect the original before urlsplit can discard controls.
-            if any(char.isspace() or ord(char) < 32 for char in value):
+            if any(
+                char.isspace() or ord(char) < 32 or 0x7F <= ord(char) <= 0x9F
+                for char in value
+            ):
                 raise ValueError
             if "\\" in value or re.search(r"%(?![0-9a-fA-F]{2})", value):
                 raise ValueError

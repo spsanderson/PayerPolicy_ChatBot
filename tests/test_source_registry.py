@@ -100,6 +100,18 @@ class SourceDefinitionTests(unittest.TestCase):
             )
             self.assertEqual(source["url"], value)
 
+    def test_rejects_del_and_c1_controls(self) -> None:
+        """Reject every DEL/C1 code point in both URL fields unchanged."""
+        for field in ("url", "evidence_url"):
+            for codepoint in range(0x7F, 0xA0):
+                source = valid_source()
+                source[field] = "https://example.org/" + chr(codepoint)
+                original = source.copy()
+                with self.subTest(field=field, codepoint=hex(codepoint)):
+                    errors = source_registry.validate_source_definition(source)
+                    self.assertTrue(any(field in error for error in errors))
+                    self.assertEqual(source, original)
+
     def test_valid_unknown_source_is_unchanged(self) -> None:
         """Accept explicit uncertainty without upgrading applicability."""
         source = valid_source()

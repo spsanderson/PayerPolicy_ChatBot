@@ -32,7 +32,7 @@ It returns field-prefixed errors and leaves the input untouched. Explicit
 unknown applicability is accepted; confirmed applicability requires an evidence
 URL, whose truth is not automatically verified. See [contract](source-definition.md).
 
-Verified: 7 test methods across provenance and registry, including parameterized
+Verified: 8 test methods across provenance and registry, including parameterized
 invalid-input cases. Tests run offline; no official source has been loaded.
 
 Next increment (not implemented): load a reviewed registry containing one
