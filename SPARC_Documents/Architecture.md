@@ -1,7 +1,7 @@
 # Architecture
 
 ## Objective
-Define the comprehensive system architecture and technical design for the RAG Ollama Application, detailing the layered architecture, component interactions, data flows, and deployment strategies for a production-ready local document Q&A system.
+Define the comprehensive system architecture and technical design for the RAG Ollama Application, detailing the layered architecture, component interactions, data flows, and deployment strategies for a production-ready web-based document Q&A system.
 
 ---
 
@@ -22,7 +22,7 @@ This architecture is chosen for its:
 - **Testability**: Layers can be tested independently
 - **Maintainability**: Changes in one layer minimally impact others
 - **Scalability**: Individual components can be optimized or scaled independently
-- **Local-First Design**: All processing occurs on-premises without external dependencies
+- **API-First Design**: Web-accessible REST API with flexible deployment options
 
 ---
 
@@ -51,6 +51,7 @@ This architecture is chosen for its:
 │  ┌──────▼──────────────────▼──────────────────────▼──────────┐     │
 │  │         Authentication & Authorization Middleware          │     │
 │  │              Rate Limiting & Request Validation            │     │
+│  │                   CORS Configuration                       │     │
 │  └────────────────────────────┬───────────────────────────────┘     │
 └───────────────────────────────┼─────────────────────────────────────┘
                                 │
@@ -93,8 +94,8 @@ This architecture is chosen for its:
 │        │                  │                  │                     │
 │  ┌─────▼──────────┐ ┌─────▼──────────┐ ┌────▼──────────────────┐ │
 │  │  Ollama API    │ │   ChromaDB     │ │   File System         │ │
-│  │  localhost:    │ │   Local Store  │ │   /data/uploads       │ │
-│  │  11434         │ │   Persistent   │ │   /data/processed     │ │
+│  │  ${OLLAMA_     │ │   Local/Cloud  │ │   /data/uploads       │ │
+│  │  BASE_URL}     │ │   Store        │ │   /data/processed     │ │
 │  │ - Embeddings   │ │ - HNSW Index   │ │   /data/vector_db     │ │
 │  │ - Generation   │ │ - Cosine Sim   │ │   /logs               │ │
 │  └────────────────┘ └────────────────┘ └───────────────────────┘ │
@@ -950,6 +951,156 @@ volumes:
 
 ---
 
+### Cloud Deployment Architecture
+
+#### AWS Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AWS Cloud Infrastructure                 │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │            CloudFront (CDN)                         │   │
+│  │  - Global content delivery                          │   │
+│  │  - HTTPS/SSL termination                            │   │
+│  └─────────────────┬───────────────────────────────────┘   │
+│                    │                                        │
+│  ┌─────────────────▼───────────────────────────────────┐   │
+│  │      Application Load Balancer (ALB)                │   │
+│  │  - Health checks: /api/health                       │   │
+│  │  - Target groups                                    │   │
+│  │  - SSL termination (ACM certificate)                │   │
+│  └───────────┬──────────────────┬──────────────────────┘   │
+│              │                  │                           │
+│  ┌───────────▼────────┐  ┌──────▼───────────┐              │
+│  │   ECS Fargate      │  │  ECS Fargate     │              │
+│  │   Task (App)       │  │  Task (App)      │              │
+│  │  - Docker container│  │ - Docker container│              │
+│  │  - Auto-scaling    │  │ - Auto-scaling   │              │
+│  └───────────┬────────┘  └──────┬───────────┘              │
+│              │                  │                           │
+│              ├──────────────────┘                           │
+│              │                                              │
+│  ┌───────────▼─────────────────────────────────────────┐   │
+│  │              Shared Services                        │   │
+│  │  ┌────────────────┐  ┌────────────────┐             │   │
+│  │  │  S3 Bucket     │  │  RDS PostgreSQL│             │   │
+│  │  │  (Documents)   │  │  (Metadata)    │             │   │
+│  │  └────────────────┘  └────────────────┘             │   │
+│  │  ┌────────────────┐  ┌────────────────┐             │   │
+│  │  │ElastiCache     │  │  EC2 Instance  │             │   │
+│  │  │(Redis/Cache)   │  │  (Ollama GPU)  │             │   │
+│  │  └────────────────┘  └────────────────┘             │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │           Monitoring & Logging                      │   │
+│  │  - CloudWatch Logs & Metrics                        │   │
+│  │  - X-Ray (Distributed tracing)                      │   │
+│  │  - SNS Alerts                                       │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Kubernetes Architecture
+
+```
+┌───────────────────────────────────────────────────────────┐
+│             Kubernetes Cluster (GKE/EKS/AKS)             │
+│                                                           │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │            Ingress Controller (Nginx)               │ │
+│  │  - HTTPS/TLS termination                            │ │
+│  │  - Path-based routing                               │ │
+│  │  - Rate limiting                                    │ │
+│  └─────────────────┬───────────────────────────────────┘ │
+│                    │                                      │
+│  ┌─────────────────▼───────────────────────────────────┐ │
+│  │         Service: rag-ollama-app-service             │ │
+│  │  - Type: LoadBalancer                               │ │
+│  │  - Port: 80 → 5000                                  │ │
+│  └───────┬─────────────────┬───────────────────────────┘ │
+│          │                 │                             │
+│  ┌───────▼─────┐  ┌────────▼──────┐  ┌──────────────┐  │
+│  │   Pod 1     │  │    Pod 2      │  │    Pod 3     │  │
+│  │ (RAG App)   │  │  (RAG App)    │  │  (RAG App)   │  │
+│  │ + Sidecar   │  │  + Sidecar    │  │  + Sidecar   │  │
+│  └─────┬───────┘  └────────┬──────┘  └──────┬───────┘  │
+│        │                   │                 │          │
+│        └───────────────────┴─────────────────┘          │
+│                            │                            │
+│  ┌─────────────────────────▼─────────────────────────┐  │
+│  │           Persistent Volumes (PVC)                 │  │
+│  │  - Documents: ReadWriteMany (NFS/EFS)              │  │
+│  │  - Vector DB: ReadWriteOnce (SSD)                  │  │
+│  │  - Logs: ReadWriteMany                             │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │           ConfigMaps & Secrets                     │  │
+│  │  - API keys, JWT secrets                           │  │
+│  │  - Environment configuration                       │  │
+│  │  - CORS origins                                    │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │        External Services (StatefulSet)             │  │
+│  │  ┌──────────────┐        ┌──────────────┐          │  │
+│  │  │  PostgreSQL  │        │   Ollama     │          │  │
+│  │  │  (Metadata)  │        │   (GPU Pod)  │          │  │
+│  │  └──────────────┘        └──────────────┘          │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │    Horizontal Pod Autoscaler (HPA)                 │  │
+│  │  - CPU: 70% threshold                              │  │
+│  │  - Memory: 80% threshold                           │  │
+│  │  - Min replicas: 3, Max: 10                        │  │
+│  └────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘
+```
+
+#### Multi-Region Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   Global Traffic Manager                    │
+│              (Route 53 / Azure Traffic Manager)             │
+│          Geo-routing + Health checks + Failover             │
+└───────────┬─────────────────────────┬───────────────────────┘
+            │                         │
+    ┌───────▼────────┐        ┌───────▼────────┐
+    │  Region: US    │        │  Region: EU    │
+    │  (Primary)     │        │  (Secondary)   │
+    │                │        │                │
+    │  ┌──────────┐  │        │  ┌──────────┐  │
+    │  │  ALB/LB  │  │        │  │  ALB/LB  │  │
+    │  └────┬─────┘  │        │  └────┬─────┘  │
+    │       │        │        │       │        │
+    │  ┌────▼─────┐  │        │  ┌────▼─────┐  │
+    │  │ App Tier │  │        │  │ App Tier │  │
+    │  │ (3 nodes)│  │        │  │ (3 nodes)│  │
+    │  └────┬─────┘  │        │  └────┬─────┘  │
+    │       │        │        │       │        │
+    │  ┌────▼─────┐  │        │  ┌────▼─────┐  │
+    │  │  Cache   │  │        │  │  Cache   │  │
+    │  │  (Redis) │  │        │  │  (Redis) │  │
+    │  └────┬─────┘  │        │  └────┬─────┘  │
+    │       │        │        │       │        │
+    │  ┌────▼─────┐  │        │  ┌────▼─────┐  │
+    │  │ Database │◄─┼────────┼─►│ Database │  │
+    │  │(Primary) │  │   Repl │  │(Replica) │  │
+    │  └──────────┘  │        │  └──────────┘  │
+    │                │        │                │
+    │  ┌──────────┐  │        │  ┌──────────┐  │
+    │  │ Storage  │◄─┼────────┼─►│ Storage  │  │
+    │  │  (S3)    │  │  Sync  │  │  (S3)    │  │
+    │  └──────────┘  │        │  └──────────┘  │
+    └────────────────┘        └────────────────┘
+```
+
+---
+
 ## Component Interaction Patterns
 
 ### Request-Response Pattern (Synchronous)
@@ -1175,7 +1326,7 @@ class CircuitBreaker:
 **Alternatives Considered:**
 - **FAISS**: Faster but requires more manual management
 - **Qdrant**: Excellent but requires separate server
-- **Weaviate**: Feature-rich but overkill for local deployment
+- **Weaviate**: Feature-rich but complex for initial web-based deployment
 - **Pinecone**: Cloud-only, violates privacy requirement
 
 ### Choice of Ollama
@@ -1271,7 +1422,7 @@ class CircuitBreaker:
 
 This architecture provides a solid foundation for a production-ready RAG application that prioritizes:
 
-1. **Privacy**: All processing occurs locally without external dependencies
+1. **Privacy**: All processing occurs on the server with configurable security controls
 2. **Performance**: Optimized for sub-5-second query responses
 3. **Scalability**: Handles 7,500+ documents with room for growth
 4. **Maintainability**: Clear separation of concerns and modular design

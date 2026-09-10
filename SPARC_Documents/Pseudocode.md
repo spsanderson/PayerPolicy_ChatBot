@@ -220,7 +220,7 @@ def create_chunk_object(text, index, metadata):
 ### Ollama Client
 
 ```
-def initialize_ollama_client(base_url, model_name):
+def initialize_ollama_client(base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), model_name="llama2"):
     client = {
         'base_url': base_url,
         'model': model_name,

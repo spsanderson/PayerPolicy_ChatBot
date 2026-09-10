@@ -620,7 +620,7 @@ def generate_embedding_with_cache(text, client):
 **Original Configuration:**
 
 ```python
-OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 CHUNK_SIZE = 500
 TOP_K_RESULTS = 5
 ```
@@ -1103,7 +1103,7 @@ def chunk_document(
 ###### RAG Ollama API Documentation
 
 Version: 1.0.0
-Base URL: `http://localhost:5000/api`
+Base URL: `${API_BASE_URL}/api` (configure via environment variable, e.g., `https://api.example.com/api`)
 Authentication: Bearer Token (JWT)
 
 ###### Table of Contents
@@ -1163,7 +1163,7 @@ All API requests (except `/auth/login`) require a valid JWT token in the Authori
 **Example:**
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST ${API_BASE_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "john_doe", "password": "secure_password"}'
 ```
@@ -1266,7 +1266,7 @@ Content-Type: application/json
 **Example:**
 
 ```bash
-curl -X POST http://localhost:5000/api/chat \
+curl -X POST ${API_BASE_URL}/api/chat \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1283,7 +1283,7 @@ curl -X POST http://localhost:5000/api/chat \
 ```python
 import requests
 
-url = "http://localhost:5000/api/chat"
+url = os.getenv("API_BASE_URL", "http://localhost:5000") + "/api/chat"
 headers = {
     "Authorization": f"Bearer {token}",
     "Content-Type": "application/json"
@@ -1348,7 +1348,7 @@ data: {"conversation_id": "550e8400-...", "metadata": {...}}
 
 ```javascript
 const eventSource = new EventSource(
-  'http://localhost:5000/api/chat/stream',
+  `${API_BASE_URL}/api/chat/stream`,
   {
     headers: {
       'Authorization': `Bearer ${token}`
@@ -1453,7 +1453,7 @@ eventSource.addEventListener('error', (e) => {
 **Example:**
 
 ```bash
-curl -X POST http://localhost:5000/api/documents/upload \
+curl -X POST ${API_BASE_URL}/api/documents/upload \
   -H "Authorization: Bearer <token>" \
   -F "documents=@Q3_report.pdf" \
   -F "documents=@financial_data.xlsx"
@@ -1464,7 +1464,7 @@ curl -X POST http://localhost:5000/api/documents/upload \
 ```python
 import requests
 
-url = "http://localhost:5000/api/documents/upload"
+url = os.getenv("API_BASE_URL", "http://localhost:5000") + "/api/documents/upload"
 headers = {"Authorization": f"Bearer {token}"}
 files = [
     ('documents', open('Q3_report.pdf', 'rb')),
@@ -1530,7 +1530,7 @@ print(f"Failed: {result['data']['failed']}")
 **Example:**
 
 ```bash
-curl -X GET "http://localhost:5000/api/documents?page=1&per_page=20&status=indexed" \
+curl -X GET "${API_BASE_URL}/api/documents?page=1&per_page=20&status=indexed" \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -1615,7 +1615,7 @@ curl -X GET "http://localhost:5000/api/documents?page=1&per_page=20&status=index
 **Example:**
 
 ```bash
-curl -X DELETE http://localhost:5000/api/documents/doc-uuid-1 \
+curl -X DELETE ${API_BASE_URL}/api/documents/doc-uuid-1 \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -2134,7 +2134,7 @@ A: Yes. All documents are:
 
 - Stored locally on the server (never sent externally)
 - Only accessible to your user account
-- Processed entirely on-premises
+- Processed securely on the server
 - Not shared with any external services
 
 ---
@@ -2229,7 +2229,7 @@ Speed up your workflow with these shortcuts:
 
 ###### Data Handling
 
-- **Local Processing**: All data stays on your organization's server
+- **Server-Side Processing**: All data stays on your organization's server
 - **No External Calls**: No information sent to external APIs
 - **User Isolation**: Your documents are only visible to you
 - **Audit Logs**: All actions are logged for security
@@ -2424,7 +2424,7 @@ python src/app.py
 # * Application ready
 
 # Test the application
-curl http://localhost:5000/api/health
+curl ${API_BASE_URL}/api/health
 
 # Expected response:
 # {"status":"healthy","checks":{"ollama":true,"vector_db":true,...}}
@@ -2581,10 +2581,10 @@ python scripts/delete_user.py --username john_doe --confirm
 
 ```bash
 # Check system health
-curl http://localhost:5000/api/health | jq
+curl ${API_BASE_URL}/api/health | jq
 
 # Monitor in real-time
-watch -n 5 'curl -s http://localhost:5000/api/health | jq'
+watch -n 5 'curl -s ${API_BASE_URL}/api/health | jq'
 
 # Check Ollama service
 systemctl status ollama
@@ -2616,7 +2616,7 @@ tail -f logs/app.log | while read line; do echo "$(date): $line"; done
 
 ```bash
 # View Prometheus metrics
-curl http://localhost:5000/metrics
+curl ${API_BASE_URL}/metrics
 
 # Key metrics to monitor:
 # - http_requests_total: Total requests
@@ -2779,7 +2779,7 @@ chown -R www-data:www-data /opt/rag-app/data
 sudo systemctl start rag-app
 
 # Verify restoration
-curl http://localhost:5000/api/health
+curl ${API_BASE_URL}/api/health
 ```
 
 ---
@@ -2819,7 +2819,7 @@ sudo systemctl restart ollama
 journalctl -u ollama -n 50
 
 # Test Ollama directly
-curl http://localhost:11434/api/tags
+curl ${OLLAMA_BASE_URL}/api/tags
 
 # Verify models loaded
 ollama list
@@ -3019,7 +3019,7 @@ DEBUG=False
 SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
 LOG_LEVEL=WARNING
 
-OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_BASE_URL=https://ollama.example.com  # Or http://localhost:11434 for local
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 OLLAMA_LLM_MODEL=llama2
 OLLAMA_TIMEOUT=60
