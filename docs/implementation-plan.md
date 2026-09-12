@@ -24,7 +24,7 @@ Implemented function:
 - Does not establish trust, validity, dates, or applicability.
 - Tests: known standard digest and invalid input contract.
 
-### Module 2: Source registry — validation implemented
+### Module 2: Source registry — validation and local loading implemented
 
 `validate_source_definition(source: object) -> List[str]` checks required
 metadata, stable ID format, HTTP(S) URL structure, and applicability status.
@@ -32,13 +32,19 @@ It returns field-prefixed errors and leaves the input untouched. Explicit
 unknown applicability is accepted; confirmed applicability requires an evidence
 URL, whose truth is not automatically verified. See [contract](source-definition.md).
 
-Verified: 8 test methods across provenance and registry, including parameterized
-invalid-input cases. Tests run offline; no official source has been loaded.
+Implemented: `parse_source_registry(text)` and `load_source_registry(path)`.
+Strict JSON parsing rejects duplicate keys, invalid envelopes/entries, and
+duplicate source IDs without partial results. Local file errors remain distinct
+from content errors. Exact source values and order are preserved.
 
-Next increment (not implemented): load a reviewed registry containing one
-official source entry. Preserve exact identifiers/URLs and reject duplicate
-IDs. Record source review evidence; source-level trust is not document-level
-applicability.
+Verified: 13 test methods across provenance and registry, including offline
+temporary-file tests and loading the checked-in registry. One official Anthem
+overview was reviewed separately and classified as reference only. Its
+[review note](source-reviews/anthem-empire-plan-overview.md) records evidence,
+review time, and unreviewed access/rights limitations.
+
+Next increment to scope: network destination and redirect validation before
+any downloader. Source-level trust is not document-level applicability.
 
 Registry URL validation is not a complete network security boundary. The later
 fetcher must validate redirects, resolved addresses, response size, MIME/content,

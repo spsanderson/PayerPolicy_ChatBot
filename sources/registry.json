@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "source_id": "anthem-empire-plan-overview",
+      "name": "Anthem Empire Plan Hospital Program overview",
+      "url": "https://www.anthembluecross.com/nys",
+      "publisher": "Anthem Blue Cross",
+      "category": "plan_resources",
+      "plan": "Empire Plan",
+      "program": "Hospital Program",
+      "applicability_status": "reference",
+      "evidence_url": "https://www.anthembluecross.com/nys",
+      "access_restrictions": "Public overview retrieved without login. Robots rules, automated downloading permissions, and redistribution rights remain unreviewed. Linked member services may require login.",
+      "reviewed_at": "2026-09-12T01:40:30+00:00",
+      "review_note": "docs/source-reviews/anthem-empire-plan-overview.md"
+    }
+  ]
+}

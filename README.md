@@ -16,6 +16,10 @@ administration of the NYSHIP Empire Plan Hospital Program.
   changing inputs or accessing the network. See the [source contract](docs/source-definition.md).
 - URL checks reject DEL and C1 control characters in both source and evidence
   URLs; regression tests cover the entire U+007F–U+009F range.
+- `parse_source_registry(text)` and `load_source_registry(path)` validate whole
+  JSON registries, reject duplicate keys/IDs, and preserve source values.
+- [Initial registry](sources/registry.json): one reviewed Anthem reference source,
+  not a policy collection. [Review evidence](docs/source-reviews/anthem-empire-plan-overview.md).
 - Standard-library unit tests. No third-party dependencies for this increment.
 
 A fingerprint identifies content, not authenticity or plan applicability.
@@ -35,6 +39,18 @@ Example in Python, launched from the repository root:
 ```python
 from payer_policy.provenance import fingerprint_document
 print(fingerprint_document(b"abc"))
+```
+
+Load the checked-in registry from the repository root (no network calls):
+
+```python
+from pathlib import Path
+from payer_policy.source_registry import load_source_registry
+
+sources = load_source_registry(Path("sources/registry.json"))
+assert list(sources) == ["anthem-empire-plan-overview"]
+assert sources["anthem-empire-plan-overview"]["applicability_status"] == "reference"
+print(list(sources))
 ```
 
 The eventual installer will bundle the application runtime. Python is currently
@@ -73,7 +89,8 @@ compliant.
 
 ```text
 payer_policy/provenance.py      Content fingerprint function
-payer_policy/source_registry.py Source definition validator
+payer_policy/source_registry.py Source validation, parsing, and local loading
+sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
 docs/architecture.md            Maintained Markdown system diagram
 docs/architecture.html          Original offline HTML snapshot
