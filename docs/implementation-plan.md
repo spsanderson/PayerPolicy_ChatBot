@@ -43,8 +43,32 @@ overview was reviewed separately and classified as reference only. Its
 [review note](source-reviews/anthem-empire-plan-overview.md) records evidence,
 review time, and unreviewed access/rights limitations.
 
-Next increment to scope: network destination and redirect validation before
-any downloader. Source-level trust is not document-level applicability.
+### Module 3: Offline network safety — implemented
+
+Implemented the [approved plan](network-safety-plan.md) in small RED/GREEN
+increments; see the [contract and executable example](network-safety.md).
+
+- `validate_destination_url(url, allowed_hosts)` approves exact reviewed ASCII
+  DNS hosts over HTTPS/443 and returns the original URL. Invalid configuration,
+  malformed input, credentials, IP literals, and fragments fail closed.
+- `validate_resolved_addresses(addresses)` checks all supplied addresses and
+  preserves their spelling/order in a tuple. Private/special-use and known
+  transition addresses, invalid inputs, and mixed answers reject atomically.
+- `validate_redirect(current_url, location, allowed_hosts, visited_urls,
+  max_redirects)` resolves valid references, rechecks destination policy,
+  rejects inconsistent histories/loops, and enforces the exact hop limit.
+
+Verified on Python 3.11.16: 30 passing test methods (13 existing and 17 new
+network-safety methods with offline fixture matrices). Runnable examples pass.
+There are no DNS lookups, network connections, or downloader implementation.
+Source-level trust is not document-level applicability.
+
+Next increment to scope and approve: the transport boundary, not automatic
+crawling. Disable automatic redirects and unsafe proxy/environment fallbacks;
+validate complete fresh DNS answers and connect only to a validated address
+without a second unchecked lookup, preserving hostname/SNI and TLS verification.
+Test actual transport behavior, DNS rebinding, retries, and redirects at that
+boundary. These pure helpers alone cannot prevent SSRF.
 
 Registry URL validation is not a complete network security boundary. The later
 fetcher must validate redirects, resolved addresses, response size, MIME/content,

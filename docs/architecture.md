@@ -1,10 +1,11 @@
 # PayerPolicy — System Architecture
 
-**Windows-first · Empire Plan Hospital Program · Phase 1, increment 3**
+**Windows-first · Empire Plan Hospital Program · Phase 1, increment 4**
 
 Content fingerprinting, source validation, JSON parsing, and local registry
-loading are implemented. One reviewed reference entry is checked in.
-Document storage, downloading, and the rest of the pipeline remain planned.
+loading are implemented. Offline URL, resolved-address, and redirect/history
+checks are implemented too. One reviewed reference entry is checked in.
+Document storage, DNS/HTTP transport, and the rest of the pipeline remain planned.
 
 This Markdown version uses Mermaid for diagram rendering on GitHub and in
 Mermaid-enabled Markdown viewers. The component table below remains readable
@@ -35,6 +36,15 @@ flowchart TB
         registryfile["IMPLEMENTED: sources/registry.json — one reviewed reference"]
         loader["IMPLEMENTED: load_source_registry()"]
         parser["IMPLEMENTED: parse_source_registry()"]
+        destination["IMPLEMENTED: validate_destination_url() — HTTPS / host allowlist"]
+        addresses["IMPLEMENTED: validate_resolved_addresses() — supplied answers only"]
+        redirects["IMPLEMENTED: validate_redirect() — target / history / hop limit"]
+        transport["Planned: DNS + validated-address connection / verified TLS / no auto-redirects"]
+        redirects --> destination
+        acquisition -.-> transport
+        transport -.-> destination
+        transport -.-> addresses
+        transport -.-> redirects
         registryfile --> loader
         loader --> parser
         parser --> validator
@@ -56,8 +66,8 @@ flowchart TB
 
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
-    class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
-    class fingerprint,validator,registryfile,loader,parser implemented;
+    class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support,transport planned;
+    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects implemented;
 ```
 
 **Legend:** Green nodes are implemented functions or checked-in data. Dashed nodes and arrows
@@ -73,6 +83,10 @@ it does not imply that a packaged application exists.
 | `parse_source_registry()` | Strict JSON parsing and whole-registry validation | Implemented and tested |
 | `load_source_registry()` | Read a local UTF-8 registry | Implemented and tested |
 | `sources/registry.json` | One reviewed Anthem overview; reference only | Checked in and load-tested |
+| `validate_destination_url()` | Exact reviewed HTTPS host/port and raw URL checks | Implemented and offline-tested |
+| `validate_resolved_addresses()` | Reject a whole supplied answer set if any address is unsafe | Implemented and offline-tested; does not resolve DNS |
+| `validate_redirect()` | Recheck target, caller history, loops, and hop limit | Implemented and offline-tested; does not follow redirects |
+| DNS/HTTP transport | Validated-address connections, verified TLS/SNI, proxy/rebinding controls | Planned; no complete SSRF boundary yet |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | Acquisition worker | Source registry, fetching, and download validation | Planned |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -96,14 +110,21 @@ Foundation components with no external dependencies:
 - **Registry parsing:** rejects invalid content and duplicates atomically.
 - **Local loading:** reads UTF-8 and preserves file/encoding errors.
 - **Reference entry:** Anthem overview with a dated review note.
+- **Network-safety helpers:** pure checks for reviewed URL destinations, complete
+  caller-supplied addresses, and redirects. No inference of live DNS or access
+  permission. See the [contract and exclusions](network-safety.md).
 
 Only the loader reads a local file. None downloads documents, accesses a
 database, or calls a model.
 
 ## Next small increment
 
-Scope network destination and redirect validation before implementing a
-downloader. No automatic downloads until those boundaries are tested.
+Scope and approve the DNS/HTTP transport boundary. A future downloader must
+connect only to a validated address without an unchecked second DNS lookup,
+retain hostname/SNI and TLS verification, disable automatic redirects and unsafe
+proxy/environment fallbacks, and validate fresh answers for every target.
+Rebinding, retries, redirects, and actual connection behavior require integration
+tests. Pure helpers alone cannot prevent SSRF; no automatic downloader exists.
 
 ## Trust boundary
 
@@ -116,4 +137,5 @@ downloader. No automatic downloads until those boundaries are tested.
 
 - [Delivery plan](implementation-plan.md)
 - [Source-definition contract](source-definition.md)
+- [Network-safety contract](network-safety.md)
 - [Project README](../README.md)
