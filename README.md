@@ -20,7 +20,12 @@ administration of the NYSHIP Empire Plan Hospital Program.
   JSON registries, reject duplicate keys/IDs, and preserve source values.
 - [Initial registry](sources/registry.json): one reviewed Anthem reference source,
   not a policy collection. [Review evidence](docs/source-reviews/anthem-empire-plan-overview.md).
-- Standard-library unit tests. No third-party dependencies for this increment.
+- `payer_policy.network_safety`: pure URL allowlist, complete resolved-address,
+  and redirect/history checks. Rejects private/special-use addresses and unsafe
+  redirects without DNS or HTTP. See the [contract and offline example](docs/network-safety.md).
+  These helpers are not a downloader or a complete SSRF defense.
+- Standard-library unit tests: 30 test methods pass on Python 3.11.16.
+  No third-party dependencies for this increment.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; a later download validator must reject empty
@@ -90,12 +95,14 @@ compliant.
 ```text
 payer_policy/provenance.py      Content fingerprint function
 payer_policy/source_registry.py Source validation, parsing, and local loading
+payer_policy/network_safety.py  Pure destination, address, and redirect checks
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
 docs/architecture.md            Maintained Markdown system diagram
 docs/architecture.html          Original offline HTML snapshot
 docs/implementation-plan.md     Living delivery plan
 docs/source-definition.md       Validator contract and example
+docs/network-safety.md          Offline safety contract and executable example
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and
