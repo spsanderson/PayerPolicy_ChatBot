@@ -1,10 +1,10 @@
 # PayerPolicy — System Architecture
 
-**Windows-first · Empire Plan Hospital Program · Phase 1, increment 2**
+**Windows-first · Empire Plan Hospital Program · Phase 1, increment 3**
 
-Content fingerprinting and source-definition validation are implemented.
-Everything else in the system diagram is planned. The foundation functions
-are not yet connected to storage or downloading.
+Content fingerprinting, source validation, JSON parsing, and local registry
+loading are implemented. One reviewed reference entry is checked in.
+Document storage, downloading, and the rest of the pipeline remain planned.
 
 This Markdown version uses Mermaid for diagram rendering on GitHub and in
 Mermaid-enabled Markdown viewers. The component table below remains readable
@@ -13,7 +13,8 @@ retained as an offline snapshot; this Markdown document is the maintained view.
 
 ## System diagram
 
-All arrows show **proposed**, not implemented, connections.
+Solid arrows show implemented local loading/calls. Dashed arrows show proposed
+pipeline connections.
 
 ```mermaid
 flowchart TB
@@ -31,6 +32,12 @@ flowchart TB
         stores["Local search stores: SQLite + vector index"]
         fingerprint["IMPLEMENTED: fingerprint_document() — exact bytes to SHA-256"]
         validator["IMPLEMENTED: validate_source_definition() — metadata / URLs / status"]
+        registryfile["IMPLEMENTED: sources/registry.json — one reviewed reference"]
+        loader["IMPLEMENTED: load_source_registry()"]
+        parser["IMPLEMENTED: parse_source_registry()"]
+        registryfile --> loader
+        loader --> parser
+        parser --> validator
         support["Planned: installer / credentials / job recovery / backup / evaluation"]
 
         acquisition -.-> originals
@@ -50,10 +57,10 @@ flowchart TB
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
     class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
-    class fingerprint,validator implemented;
+    class fingerprint,validator,registryfile,loader,parser implemented;
 ```
 
-**Legend:** Green nodes are implemented functions. Dashed nodes and arrows
+**Legend:** Green nodes are implemented functions or checked-in data. Dashed nodes and arrows
 represent planned components and data flow. The Windows boundary is proposed;
 it does not imply that a packaged application exists.
 
@@ -63,6 +70,9 @@ it does not imply that a packaged application exists.
 |---|---|---|
 | `fingerprint_document()` | Fingerprint exact document bytes using SHA-256 | Implemented and unit-tested |
 | `validate_source_definition()` | Check source metadata, URLs, and applicability status | Implemented and unit-tested |
+| `parse_source_registry()` | Strict JSON parsing and whole-registry validation | Implemented and tested |
+| `load_source_registry()` | Read a local UTF-8 registry | Implemented and tested |
+| `sources/registry.json` | One reviewed Anthem overview; reference only | Checked in and load-tested |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | Acquisition worker | Source registry, fetching, and download validation | Planned |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -77,18 +87,23 @@ it does not imply that a packaged application exists.
 
 ## Implemented now
 
-Two pure functions with no external dependencies:
+Foundation components with no external dependencies:
 
 - **Document fingerprints:** identify identical content, not authenticity.
 - **Source-definition validation:** check structure without verifying source
   authority or actual policy applicability.
 
-Neither function downloads documents, accesses a database, or calls a model.
+- **Registry parsing:** rejects invalid content and duplicates atomically.
+- **Local loading:** reads UTF-8 and preserves file/encoding errors.
+- **Reference entry:** Anthem overview with a dated review note.
+
+Only the loader reads a local file. None downloads documents, accesses a
+database, or calls a model.
 
 ## Next small increment
 
-A registry loader and one reviewed official source entry. No automatic
-downloads until network and applicability boundaries are tested.
+Scope network destination and redirect validation before implementing a
+downloader. No automatic downloads until those boundaries are tested.
 
 ## Trust boundary
 

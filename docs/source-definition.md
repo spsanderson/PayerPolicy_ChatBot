@@ -60,6 +60,32 @@ assert source["applicability_status"] == "unknown"
 ```
 
 Confirmed status is a caller-supplied claim requiring a structurally valid
-supporting URL, not an automated finding. A registry loader and review process
-will control trusted entries. Individual documents still require applicability
-review. No real registry entry or network connector ships in this increment.
+supporting URL, not an automated finding. The loader validates structure, not
+the truth of review evidence. Individual documents still require applicability
+review. One reviewed reference entry ships; no network connector exists.
+
+## Registry format and loading
+
+```json
+{"schema_version": 1, "sources": []}
+```
+
+- `parse_source_registry(text: str) -> Dict[str, dict]` accepts JSON text.
+- `load_source_registry(path: Path) -> Dict[str, dict]` reads a local UTF-8 file.
+- Both return an insertion-ordered mapping keyed by exact source IDs.
+- Version must be integer `1` (not a boolean, float, or string).
+- `sources` must be a list; an explicitly empty list is valid.
+- Duplicate JSON keys anywhere, duplicate source IDs, malformed JSON, NaN,
+  Infinity, or invalid source entries raise `RegistryValidationError`.
+- Entry errors include the zero-based `sources[index]` and field. Parsing stops
+  at the first invalid entry; no partial result is returned.
+- File-access errors remain `OSError` subclasses; invalid UTF-8 raises
+  `UnicodeDecodeError`. Missing files never masquerade as empty registries.
+- UTF-8 BOM is rejected by the JSON decoder. Save without BOM.
+- Extra source metadata is preserved, not authenticated. Extra envelope fields
+  are currently ignored. Values, URLs, and identifiers are not normalized.
+- Caller-selected files are read wholly into memory; this is not an untrusted
+  upload interface or a network security boundary.
+
+See the [README loading example](../README.md) and the
+[checked-in reference review](source-reviews/anthem-empire-plan-overview.md).
