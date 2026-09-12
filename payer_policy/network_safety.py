@@ -70,7 +70,10 @@ def _validate_allowlist(allowed_hosts: Collection[str]) -> None:
 def _request_identity(url: str) -> Tuple[str, int, str, str]:
     """Compare validated requests without decoding or query reordering."""
     parts = urlsplit(url)
-    return (parts.hostname, parts.port or 443, parts.path or "/", parts.query)
+    hostname = parts.hostname
+    if hostname is None:
+        raise NetworkSafetyError("URL must include a hostname")
+    return (hostname, parts.port or 443, parts.path or "/", parts.query)
 
 
 def validate_redirect(
