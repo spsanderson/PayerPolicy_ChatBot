@@ -36,9 +36,10 @@ Documentation is part of each increment, not a final cleanup task.
   Keep the link near the function (docstring or adjacent short comment); group
   shared references once in module documentation to avoid repeating URLs.
   Do not paste long documentation excerpts or add links for routine syntax.
-- Write user-facing docs and change reports in **ELI5** language: define jargon
-  on first use, use a concrete example where helpful, and keep technical
-  constraints, security caveats, and actual verification intact.
+- Write user-facing docs and change reports in **Explain Like I'm Five (ELI5)**
+  language: define jargon on first use, use a concrete example where helpful,
+  and keep technical constraints, security caveats, and actual verification
+  intact.
 - Make each new function easy to find and test. A few cohesive functions are
   better than a pile of one-line wrappers or a large do-everything function.
 

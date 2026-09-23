@@ -17,8 +17,9 @@ applyTo: '**/*.py'
   used and why it matters here. Put it in the docstring or a nearby comment;
   share a module-level reference when multiple functions use the same API.
   Avoid link spam for ordinary syntax and do not copy long external passages.
-- Explain algorithms and security-critical decisions simply (ELI5), without
-  dropping technical constraints, failure modes, or test evidence.
+- Explain algorithms and security-critical decisions simply (Explain Like I'm
+  Five, or ELI5), without dropping technical constraints, failure modes, or
+  test evidence.
 - Add a brief comment only when the reason for a choice is not apparent from
   the code and docstring.
 - Ensure functions have descriptive names and include type hints.
@@ -41,7 +42,7 @@ applyTo: '**/*.py'
 - Follow the **PEP 8** style guide for Python.
 - Maintain proper indentation (use 4 spaces for each level of indentation).
 - Ensure lines do not exceed 79 characters.
-- Place function and class docstrings immediately after the `def` or `class` keyword.
+- Put class and function docstrings as the first statement in their bodies.
 - Use blank lines to separate functions, classes, and code blocks where appropriate.
 
 ## Edge Cases and Testing
@@ -54,16 +55,16 @@ applyTo: '**/*.py'
 ## Example of Proper Documentation
 
 ```python
+import math
+
+
 def calculate_area(radius: float) -> float:
+    """Return a circle's area; reject negative radii with ValueError.
+
+    math.pi (https://docs.python.org/3/library/math.html#math.pi) is the
+    circle constant used in the radius-squared area formula.
     """
-    Calculate the area of a circle given the radius.
-    
-    Parameters:
-    radius (float): The radius of the circle.
-    
-    Returns:
-    float: The area of the circle, calculated as π * radius^2.
-    """
-    import math
+    if radius < 0:
+        raise ValueError("radius must not be negative")
     return math.pi * radius ** 2
 ```
