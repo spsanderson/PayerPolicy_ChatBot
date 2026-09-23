@@ -7,10 +7,23 @@ applyTo: '**/*.py'
 
 ## Python Instructions
 
-- Write clear and concise comments for each function.
+- Follow [CONTRIBUTING.md](../CONTRIBUTING.md): implement the smallest tested
+  behavior, not speculative layers or wrappers. Keep real safety boundaries.
+- Every function needs a concise, plain-English docstring: purpose, relevant
+  inputs, return value, and important errors/side effects. Do not repeat the
+  signature in prose.
+- For important functions called (project helpers or libraries), include a link
+  to their definitions or official docs and a short paraphrase of the behavior
+  used and why it matters here. Put it in the docstring or a nearby comment;
+  share a module-level reference when multiple functions use the same API.
+  Avoid link spam for ordinary syntax and do not copy long external passages.
+- Explain algorithms and security-critical decisions simply (ELI5), without
+  dropping technical constraints, failure modes, or test evidence.
+- Add a brief comment only when the reason for a choice is not apparent from
+  the code and docstring.
 - Ensure functions have descriptive names and include type hints.
 - Provide docstrings following PEP 257 conventions.
-- Use the `typing` module for type annotations (e.g., `List[str]`, `Dict[str, int]`).
+- Use clear type annotations (built-in generics or `typing` where needed).
 - Break down complex functions into smaller, more manageable functions.
 
 ## General Instructions
