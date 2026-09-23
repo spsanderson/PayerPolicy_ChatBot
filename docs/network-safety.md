@@ -150,26 +150,25 @@ for operation in (
 print("Offline network-safety example passed")
 ```
 
-## Verification and remaining transport gate
+## Verification and remaining acquisition work
 
-`python -m unittest discover -s tests -v` exercises 30 test methods, including
-17 network-safety methods with adversarial subtest matrices. Socket construction,
-DNS lookup entry points, and connection helpers are blocked in network tests.
-Coverage includes all raw C0/DEL/C1 controls, malformed authorities, restricted
-and mixed addresses, transition IPv6, relative redirects, loops, exact hop
-boundaries, and input preservation. No live destination or HTTP client is tested.
+`python -m unittest discover -s tests -v` exercises the offline safety helpers
+and transport together. The 17 network-safety methods still cover adversarial
+fixture matrices. Socket construction, DNS entry points, and connection
+helpers are blocked in the *pure-helper* tests. No live destination is tested.
 
-A future downloader must disable automatic redirects and unsafe proxy/environment
-fallbacks, resolve every target, validate the complete answer set, and connect
-**only to a validated address** while retaining the original hostname for SNI
-and verified TLS certificates. It must not perform a second unchecked DNS lookup.
-Actual connection behavior, rebinding, retries, proxy handling, and redirects
-need transport integration tests. Pure helpers alone cannot prevent SSRF.
+The [checked-address HTTPS transport](https-transport.md) now resolves each
+request, checks returned addresses, connects to a selected numeric address,
+retains the hostname for verified TLS, and handles redirects explicitly with
+fresh DNS. Its separate loopback test covers real TCP/TLS/HTTP mechanics.
+The pure helpers remain offline and do not themselves prevent server-side
+request forgery (SSRF); the transport must be used for network access. No
+public-site path or DNS-resolution deadline has been verified.
 
-Still separate and unimplemented: robots/access permission review, response
-size/time limits, MIME/content validation, immutable originals, retries,
-source-specific connectors, and document applicability review. The reviewed
-host allowlist is caller-owned; this increment does not supply one for live use.
+Still separate and unimplemented: robots/access permission review, MIME/content
+validation, immutable originals, retries, source-specific connectors, and
+document applicability review. The reviewed host allowlist is caller-owned;
+this increment does not supply one for live use.
 
 See [architecture](architecture.md), [delivery plan](implementation-plan.md),
 and [README](../README.md).

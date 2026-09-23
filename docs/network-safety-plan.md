@@ -143,3 +143,8 @@ examples, and 25 resolving local Markdown links. Mermaid structure checks
 passed for 20 declared/classified nodes; visual rendering was not exercised.
 The historical HTML snapshot is unchanged. No downloader, commit, or push was
 performed.
+
+A later, separately approved increment implemented the checked-address HTTPS
+GET building block; see [its contract](https-transport.md). The original
+scope above remains a record of what the *offline helpers* did and did not
+establish at the time. No automatic acquisition worker was added.

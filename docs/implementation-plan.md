@@ -63,16 +63,32 @@ network-safety methods with offline fixture matrices). Runnable examples pass.
 There are no DNS lookups, network connections, or downloader implementation.
 Source-level trust is not document-level applicability.
 
-Next increment to scope and approve: the transport boundary, not automatic
-crawling. Disable automatic redirects and unsafe proxy/environment fallbacks;
-validate complete fresh DNS answers and connect only to a validated address
-without a second unchecked lookup, preserving hostname/SNI and TLS verification.
-Test actual transport behavior, DNS rebinding, retries, and redirects at that
-boundary. These pure helpers alone cannot prevent SSRF.
+### Module 4: Checked-address HTTPS transport — implemented building block
 
-Registry URL validation is not a complete network security boundary. The later
-fetcher must validate redirects, resolved addresses, response size, MIME/content,
-timeouts, and destination restrictions before saving downloaded content.
+`fetch_https(url, allowed_hosts, *, max_redirects=3, timeout=10,
+max_bytes=10_000_000)` connects to one of the approved DNS addresses without
+resolving the hostname again at the HTTP connection. It retains hostname-based
+TLS verification, revalidates redirects with fresh DNS results, closes each
+connection, rejects failed/oversized responses, and does not use proxies or
+retry a failed connection. See the [transport contract](https-transport.md).
+
+Verified on Python 3.11.16: 48 offline unit-test methods and one separate
+loopback-only TLS integration method pass. That integration test creates a
+temporary test certificate with OpenSSL and checks matching and mismatched host
+names. No public source was fetched. These checks do **not** establish crawl
+permission, content validity, applicability, a hard DNS timeout, or an
+end-to-end downloader. The source registry is not wired to this operation.
+
+Next increment to scope and approve: source-access review and document
+validation/storage using this bounded fetch building block. Confirm allowed
+hosts, robots/access restrictions, content types, empty/invalid documents,
+immutable originals, source URL and retrieval time before creating a library.
+A live-source test would require explicit scope and careful evidence recording.
+
+Registry URL validation alone is not a network security boundary. The new
+transport enforces destination/address/redirect checks and a raw byte limit,
+but a future ingestion pipeline must still check MIME/content, permissions,
+empty documents, and provenance before saving downloaded content.
 
 Then validate real source access and preserve a representative document set.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings

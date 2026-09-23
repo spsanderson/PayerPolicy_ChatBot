@@ -3,9 +3,11 @@
 A Windows-first, local policy-research application being built for Anthem's
 administration of the NYSHIP Empire Plan Hospital Program.
 
-> Early development. There is no installer, chat interface, downloader, or
-> indexed policy collection yet. The previous README described planned features
-> as completed; those claims are not verified. Its history remains in Git.
+> Early development. There is no installer, chat interface, indexed policy
+> collection, or automatic policy downloader yet. A bounded HTTPS GET building
+> block is available for approved hosts; it does not collect policies. The
+> previous README described planned features as completed; those claims are
+> not verified. Its history remains in Git.
 
 ## Working today
 
@@ -24,8 +26,15 @@ administration of the NYSHIP Empire Plan Hospital Program.
   and redirect/history checks. Rejects private/special-use addresses and unsafe
   redirects without DNS or HTTP. See the [contract and offline example](docs/network-safety.md).
   These helpers are not a downloader or a complete SSRF defense.
-- Standard-library unit tests: 30 test methods pass on Python 3.11.16.
-  No third-party dependencies for this increment.
+- `payer_policy.https_transport.fetch_https`: a bounded HTTPS GET building
+  block. It checks DNS answers, connects only to a checked numeric address,
+  keeps normal hostname-based TLS certificate checks, and rechecks redirects.
+  See the [transport contract and limits](docs/https-transport.md). It is not
+  an automatic downloader or permission to crawl an approved host.
+- Standard-library unit tests: 48 test methods pass on Python 3.11.16; a
+  separate local-loopback TLS integration test also passes. No third-party
+  runtime dependency was added. The integration test needs OpenSSL to generate
+  a temporary certificate.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; a later download validator must reject empty
@@ -37,7 +46,11 @@ Requires Python 3.11 or newer. From the repository root:
 
 ```console
 python -m unittest discover -s tests -v
+python -m unittest discover -s tests/integration -v
 ```
+
+The second command tests a real local TLS connection; it needs the OpenSSL
+command-line tool and skips if unavailable. No public policy site is contacted.
 
 Example in Python, launched from the repository root:
 
@@ -96,13 +109,16 @@ compliant.
 payer_policy/provenance.py      Content fingerprint function
 payer_policy/source_registry.py Source validation, parsing, and local loading
 payer_policy/network_safety.py  Pure destination, address, and redirect checks
+payer_policy/https_transport.py  Checked-address HTTPS GET building block
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
+tests/integration/              Explicit local-loopback TLS test
 docs/architecture.md            Maintained Markdown system diagram
 docs/architecture.html          Original offline HTML snapshot
 docs/implementation-plan.md     Living delivery plan
 docs/source-definition.md       Validator contract and example
 docs/network-safety.md          Offline safety contract and executable example
+docs/https-transport.md          HTTPS transport contract and limitations
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and
