@@ -79,11 +79,28 @@ names. No public source was fetched. These checks do **not** establish crawl
 permission, content validity, applicability, a hard DNS timeout, or an
 end-to-end downloader. The source registry is not wired to this operation.
 
-Next increment to scope and approve: source-access review and document
-validation/storage using this bounded fetch building block. Confirm allowed
-hosts, robots/access restrictions, content types, empty/invalid documents,
-immutable originals, source URL and retrieval time before creating a library.
-A live-source test would require explicit scope and careful evidence recording.
+### Source-access review — completed with unresolved access/reuse decisions
+
+On September 25, 2026, Participating Agencies (PA) was selected as the first
+application example. The [PA certificate review](source-reviews/pa-certificate-2025.md)
+records a January 2025 certificate, related amendments and a May 2026 report,
+observed research access, precise source references, and remaining gaps.
+
+The candidate has readable Hospital Program evidence, but current-service-date
+completeness and automated collection/redistribution permission remain unresolved.
+The new NYSHIP library could not be fully inspected. No registry entry or access
+approval was added, and no application transport was exercised against a public
+source. Successful research retrieval is not a live application integration test.
+
+Next increment proposed for separate approval: offline PDF-candidate checks with
+synthetic fixtures. Define content-type, empty-body, content-encoding and signature
+rules, but do not label a shallow format check as full PDF or policy validation.
+The review contains the proposed contract, failure behavior and tests.
+
+Original-file storage, structural parsing and live application acquisition remain
+later approval gates. Their plans must address immutable bytes, source/request/final
+URLs, UTC retrieval times, fingerprints, interruption recovery and explicit access
+scope before a document library is created.
 
 Registry URL validation alone is not a network security boundary. The new
 transport enforces destination/address/redirect checks and a raw byte limit,
