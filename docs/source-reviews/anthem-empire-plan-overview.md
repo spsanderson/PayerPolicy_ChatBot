@@ -40,3 +40,12 @@ not retain a full original-page snapshot. Recheck before automated acquisition.
 `reviewed_at` and `review_note` are supplementary metadata preserved by the
 loader; the current source validator does not authenticate or validate those
 review fields. Tests check that this entry links to this checked-in note.
+
+## Follow-up source review — September 25, 2026
+
+The [Participating Agencies certificate review](pa-certificate-2025.md) records
+Steve's selected first example and direct evidence from a Civil Service-hosted
+certificate. It does not upgrade this overview's reference-only classification.
+The September 12 findings above remain historical, not a fresh review of this
+page. An Anthem robots request during the follow-up returned HTTP 404; that does
+not establish automated-download or redistribution permission.
