@@ -162,8 +162,13 @@ crawling, or document redistribution.
 
 ## Verification of this documentation increment
 
-- 51 offline tests and one separate local TLS test passed under the session's
-  Python 3.14.7. No public-site test was added to those suites.
+- The documented minimum is Python 3.11; the established verification baseline
+  is Python 3.11.16. A fresh baseline run passed all 51 offline tests and the
+  separate local TLS test.
+- The source-review session also passed those suites on Python 3.14.7. That was
+  an additional interpreter run, not a change to the minimum or baseline, and
+  does not establish verification of every Python version in between.
+  No public-site test was added to those suites.
 - All 36 checked local documentation links resolved.
 - The citation ledger verified six cited sources, each with a matched excerpt.
   Unused discovery URLs remain in the local ledger and are not cited as evidence.
