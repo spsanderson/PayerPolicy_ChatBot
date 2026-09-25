@@ -81,7 +81,7 @@ end-to-end downloader. The source registry is not wired to this operation.
 
 ### Source-access review — completed with unresolved access/reuse decisions
 
-On September 25, 2026, Steve selected Participating Agencies (PA) as the first
+On September 25, 2026, Participating Agencies (PA) was selected as the first
 application example. The [PA certificate review](source-reviews/pa-certificate-2025.md)
 records a January 2025 certificate, related amendments and a May 2026 report,
 observed research access, precise source references, and remaining gaps.
