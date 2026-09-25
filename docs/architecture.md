@@ -1,11 +1,13 @@
 # PayerPolicy — System Architecture
 
-**Windows-first · Empire Plan Hospital Program · Phase 1, increment 4**
+**Windows-first · Empire Plan Hospital Program · Phase 1, increment 5**
 
 Content fingerprinting, source validation, JSON parsing, and local registry
 loading are implemented. Offline URL, resolved-address, and redirect/history
-checks are implemented too. One reviewed reference entry is checked in.
-Document storage, DNS/HTTP transport, and the rest of the pipeline remain planned.
+checks are implemented too. A bounded checked-address HTTPS GET building block
+now uses these checks; one reviewed reference entry is checked in. Document
+storage, an automatic acquisition worker, and the rest of the pipeline remain
+planned.
 
 This Markdown version uses Mermaid for diagram rendering on GitHub and in
 Mermaid-enabled Markdown viewers. The component table below remains readable
@@ -39,12 +41,12 @@ flowchart TB
         destination["IMPLEMENTED: validate_destination_url() — HTTPS / host allowlist"]
         addresses["IMPLEMENTED: validate_resolved_addresses() — supplied answers only"]
         redirects["IMPLEMENTED: validate_redirect() — target / history / hop limit"]
-        transport["Planned: DNS + validated-address connection / verified TLS / no auto-redirects"]
+        transport["IMPLEMENTED: bounded HTTPS GET — checked IP / verified TLS / manual redirects"]
         redirects --> destination
         acquisition -.-> transport
-        transport -.-> destination
-        transport -.-> addresses
-        transport -.-> redirects
+        transport --> destination
+        transport --> addresses
+        transport --> redirects
         registryfile --> loader
         loader --> parser
         parser --> validator
@@ -66,8 +68,8 @@ flowchart TB
 
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
-    class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support,transport planned;
-    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects implemented;
+    class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
+    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport implemented;
 ```
 
 **Legend:** Green nodes are implemented functions or checked-in data. Dashed nodes and arrows
@@ -86,7 +88,7 @@ it does not imply that a packaged application exists.
 | `validate_destination_url()` | Exact reviewed HTTPS host/port and raw URL checks | Implemented and offline-tested |
 | `validate_resolved_addresses()` | Reject a whole supplied answer set if any address is unsafe | Implemented and offline-tested; does not resolve DNS |
 | `validate_redirect()` | Recheck target, caller history, loops, and hop limit | Implemented and offline-tested; does not follow redirects |
-| DNS/HTTP transport | Validated-address connections, verified TLS/SNI, proxy/rebinding controls | Planned; no complete SSRF boundary yet |
+| Checked-address HTTPS GET | DNS-answer validation, pinned numeric TCP, verified TLS, manual redirects, bounded body | Implemented; offline unit tests and local TLS test, no public fetch verified |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | Acquisition worker | Source registry, fetching, and download validation | Planned |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -111,20 +113,24 @@ Foundation components with no external dependencies:
 - **Local loading:** reads UTF-8 and preserves file/encoding errors.
 - **Reference entry:** Anthem overview with a dated review note.
 - **Network-safety helpers:** pure checks for reviewed URL destinations, complete
-  caller-supplied addresses, and redirects. No inference of live DNS or access
-  permission. See the [contract and exclusions](network-safety.md).
+  caller-supplied addresses, and redirects. See the
+  [contract and exclusions](network-safety.md).
+- **Checked-address HTTPS GET:** calls those helpers, resolves each request,
+  pins the selected address, verifies hostname TLS identity, and bounds bytes
+  in memory. It has no reviewed live-source integration. See the
+  [transport contract](https-transport.md).
 
-Only the loader reads a local file. None downloads documents, accesses a
-database, or calls a model.
+Only the loader reads a local file. The transport can perform one reviewed-host
+HTTPS GET when called, but the source registry does not call it. No component
+stores retrieved policies, accesses a database, or calls a model.
 
 ## Next small increment
 
-Scope and approve the DNS/HTTP transport boundary. A future downloader must
-connect only to a validated address without an unchecked second DNS lookup,
-retain hostname/SNI and TLS verification, disable automatic redirects and unsafe
-proxy/environment fallbacks, and validate fresh answers for every target.
-Rebinding, retries, redirects, and actual connection behavior require integration
-tests. Pure helpers alone cannot prevent SSRF; no automatic downloader exists.
+Scope and approve source-access review and document validation/storage before
+building an acquisition worker. The transport does not check whether the host
+permits automated access, whether bytes are a valid policy, or whether that
+policy governs a particular benefit. It also lacks a hard DNS-resolution
+or whole-request deadline. Keep these limits explicit in a future live test.
 
 ## Trust boundary
 
@@ -138,4 +144,5 @@ tests. Pure helpers alone cannot prevent SSRF; no automatic downloader exists.
 - [Delivery plan](implementation-plan.md)
 - [Source-definition contract](source-definition.md)
 - [Network-safety contract](network-safety.md)
+- [HTTPS transport contract](https-transport.md)
 - [Project README](../README.md)
