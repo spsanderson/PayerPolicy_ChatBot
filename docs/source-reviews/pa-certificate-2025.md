@@ -7,8 +7,8 @@ collection or redistribution.** This is a source review, not an ingestion
 implementation or a complete current-benefits determination.
 
 - Review date: September 25, 2026 (UTC).
-- Steve selected **Participating Agencies (PA)** as the first application example.
-  This does not identify his personal coverage or approve other member groups.
+- Selected first application example: **Participating Agencies (PA)**.
+  This does not identify any individual's personal coverage or approve other member groups.
 - Primary candidate: the Department of Civil Service, Employee Benefits
   Division's January 1, 2025 Empire Plan Certificate for Participating Agencies.[9]
 - Registry unchanged. This note records a candidate without turning review
