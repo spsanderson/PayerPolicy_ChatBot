@@ -20,7 +20,10 @@ implementation or a complete current-benefits determination.
 
 The cover identifies the PA population, including active employees, retirees,
 vestees, dependent survivors, covered dependents, COBRA and Young Adult Option
-enrollees. It states that benefits are effective through January 1, 2025.[9]
+enrollees. The cover is dated January 1, 2025 and states: "This document
+includes all benefits effective through January 1, 2025." This describes the
+benefits incorporated in that edition; it does not establish a coverage
+expiration date or a single start date for every included benefit.[9]
 
 Section II begins on printed page 11 (PDF page 16). It describes Hospital
 Program coverage and explicitly says: "The Hospital Program Administrator is
