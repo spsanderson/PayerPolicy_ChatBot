@@ -31,7 +31,7 @@ administration of the NYSHIP Empire Plan Hospital Program.
   keeps normal hostname-based TLS certificate checks, and rechecks redirects.
   See the [transport contract and limits](docs/https-transport.md). It is not
   an automatic downloader or permission to crawl an approved host.
-- Standard-library unit tests: 48 test methods pass on Python 3.11.16; a
+- Standard-library unit tests: 51 test methods pass on Python 3.11.16; a
   separate local-loopback TLS integration test also passes. No third-party
   runtime dependency was added. The integration test needs OpenSSL to generate
   a temporary certificate.

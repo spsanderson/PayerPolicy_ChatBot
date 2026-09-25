@@ -34,40 +34,71 @@ class FetchResult:
 
 
 class _LimitedHeaderReader:
-    """Count status and header bytes, including discarded 100 responses."""
+    """Share one byte budget across headers and chunk metadata, not payload."""
 
     def __init__(self, stream: BinaryIO) -> None:
-        """Keep the response stream and a per-request header count."""
+        """Keep the response stream and cumulative metadata count."""
         self.stream = stream
         self.total = 0
 
     def readline(self, limit: int = -1) -> bytes:
-        """Reject an oversized header line/block before parsing continues."""
-        line = self.stream.readline(limit)
-        self.total += len(line)
-        if self.total > 65_536:
-            raise TransportError("response headers exceed 64 KiB")
+        """Count status, header, chunk-size, and trailer lines before parsing."""
+        remaining = 65_536 - self.total + 1
+        size = remaining if limit < 0 else min(limit, remaining)
+        line = self.stream.readline(size)
+        self.count(len(line))
         return line
+
+    def count(self, size: int) -> None:
+        """Charge metadata bytes, rejecting anything beyond the shared cap."""
+        self.total += size
+        if self.total > 65_536:
+            raise TransportError(
+                "response headers exceed 64 KiB including framing/trailers")
+
+    def read(self, size: int = -1) -> bytes:
+        """Pass payload reads through; fetch_https enforces their size limit."""
+        return self.stream.read(size)
+
+    def flush(self) -> None:
+        """Forward HTTPResponse.close's flush before closing the input file."""
+        self.stream.flush()
+
+    def close(self) -> None:
+        """Close the wrapped file when HTTPResponse finishes or fails."""
+        self.stream.close()
 
 
 class _BoundedHTTPResponse(http.client.HTTPResponse):
-    """Limit all HTTP header blocks before http.client discards interims.
+    """Limit headers and chunk metadata throughout a response.
 
-    HTTPResponse.begin() reads status and headers using readline(), including
-    intermediate 100 responses; see the Python http.client implementation:
+    HTTPResponse reads status, headers, chunk sizes, and trailers via readline;
+    chunk separators use read instead. Keep both under one budget. This uses
+    a private parser hook, so rerun transport tests on Python upgrades. See:
     https://github.com/python/cpython/blob/3.11/Lib/http/client.py.
     """
 
     def begin(self) -> None:
-        """Count headers only; restore the stream for normal bounded body reads."""
+        """Keep line counting active through the final chunk and trailers."""
         if self.headers is not None:
             return
-        stream = self.fp
-        self.fp = _LimitedHeaderReader(stream)
+        self.fp = _LimitedHeaderReader(self.fp)
         try:
             super().begin()
-        finally:
-            self.fp = stream
+        except BaseException:
+            self.close()
+            raise
+
+    def _get_chunk_left(self) -> int | None:
+        """Charge the separator that Python reads outside readline().
+
+        The linked CPython implementation reads two separator bytes when
+        chunk_left is zero, then reads the next size and trailers as lines.
+        Reserve those two bytes first; payload reads stay outside this budget.
+        """
+        if self.chunk_left == 0:
+            self.fp.count(2)
+        return super()._get_chunk_left()
 
 
 class _PinnedHTTPSConnection(http.client.HTTPSConnection):

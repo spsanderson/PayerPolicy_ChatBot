@@ -72,7 +72,7 @@ TLS verification, revalidates redirects with fresh DNS results, closes each
 connection, rejects failed/oversized responses, and does not use proxies or
 retry a failed connection. See the [transport contract](https-transport.md).
 
-Verified on Python 3.11.16: 48 offline unit-test methods and one separate
+Verified on Python 3.11.16: 51 offline unit-test methods and one separate
 loopback-only TLS integration method pass. That integration test creates a
 temporary test certificate with OpenSSL and checks matching and mismatched host
 names. No public source was fetched. These checks do **not** establish crawl

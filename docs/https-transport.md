@@ -39,10 +39,16 @@ fetch_https(url, allowed_hosts, *, max_redirects=3,
   headers, and response bytes. `max_bytes` defaults to **10,000,000 bytes**;
   reading one extra byte detects oversized bodies. Declared sizes above the
   limit, duplicate or invalid `Content-Length`, conflicting response framing,
-  and truncated declared bodies fail. Response status lines and headers,
-  including intermediate `100 Continue` blocks, share a 64 KiB read limit;
-  Python's HTTP parser may already have buffered more at the socket layer.
-  Raw body bytes are not decoded or decompressed.
+  and truncated declared bodies fail. Status lines, headers (including
+  intermediate `100 Continue` blocks), chunk framing (size markers, extra
+  information on those markers, and separators), and trailers (header fields
+  sent after the body) share one **64 KiB budget per response**. A small body
+  cannot hide oversized trailing fields. This can reject a valid response
+  with very many tiny chunks; the body limit remains separate. Line reads
+  use at most the remaining budget plus one byte to detect overflow; socket
+  buffering may hold more. Raw body bytes are not decoded or decompressed.
+  The framing check uses a private Python parser hook; rerun transport tests
+  when upgrading Python.
 - `timeout` defaults to 10 seconds for socket operations, **not** a total
   request deadline. Operating-system DNS resolution can still block longer.
   `max_redirects` defaults to three; zero forbids the first redirect. Limits

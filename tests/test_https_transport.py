@@ -133,6 +133,68 @@ class HTTPSTransportTests(unittest.TestCase):
         self.assertEqual(result.status, 200)
         tls.close.assert_called()
 
+    def test_chunked_trailers_share_header_byte_limit(self) -> None:
+        """A tiny body cannot hide oversized fields sent after it."""
+        from payer_policy.https_transport import TransportError, fetch_https
+        reply = (b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+                 b"2\r\nOK\r\n0\r\n" + (b"X-Test: " + b"a" * 1000 + b"\r\n") * 100
+                 + b"\r\n")
+        with controlled_reply(reply) as (_, _, _, tls):
+            with self.assertRaisesRegex(TransportError, "headers exceed"):
+                fetch_https("https://example.org/", ["example.org"], max_bytes=2)
+        tls.close.assert_called()
+
+    def test_chunk_separators_count_toward_metadata_limit(self) -> None:
+        """The two bytes after each body piece belong to the shared budget."""
+        from payer_policy.https_transport import TransportError, fetch_https
+        prefix = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nX-Pad: "
+        suffix = b"\r\n\r\n1\r\na\r\n0\r\n\r\n"
+        # Exactly one byte over when the body's byte is excluded.
+        reply = prefix + b"p" * (65_537 - len(prefix + suffix) + 1) + suffix
+        with controlled_reply(reply) as (_, _, _, tls):
+            with self.assertRaisesRegex(TransportError, "headers exceed"):
+                fetch_https("https://example.org/", ["example.org"], max_bytes=1)
+        tls.close.assert_called()
+
+    def test_chunked_metadata_boundaries_and_cleanup(self) -> None:
+        """Keep valid bodies, reject combined overhead, and close input files."""
+        from payer_policy.https_transport import TransportError, fetch_https
+        header = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n"
+        small = b"\r\n1;x=y\r\nO\r\n1\r\nK\r\n0\r\nX-End: yes\r\n\r\n"
+        combined = (b"X-Pad: " + b"a" * 33_000 + b"\r\n\r\n2\r\nOK\r\n0\r\n"
+                    + b"X-End: " + b"b" * 33_000 + b"\r\n\r\n")
+        extensions = (b"\r\n" + (b"1;x=" + b"a" * 33_000 + b"\r\na\r\n") * 2
+                      + b"0\r\n\r\n")
+        prefix = header + b"X-Pad: "
+        suffix = b"\r\n\r\n2\r\nOK\r\n0\r\nX-End: yes\r\n\r\n"
+        exact = prefix + b"a" * (65_536 - len(prefix + suffix) + 2) + suffix
+        large_body = b"a" * 70_000
+        large = (header + b"\r\n" + b"%x\r\n" % len(large_body)
+                 + large_body + b"\r\n0\r\n\r\n")
+        for reply, limit, expected in (
+            (header + small, 2, b"OK"),
+            (exact, 2, b"OK"),
+            (large, len(large_body), large_body),
+            (header + combined, 2, None),
+            (header + extensions, 2, None),
+            (header + small, 1, None),
+            (header + b"Connection: close\r\n" + combined, 2, None),
+        ):
+            with self.subTest(size=len(reply), limit=limit):
+                stream = io.BytesIO(reply)
+                with controlled_reply(reply) as (_, _, _, tls):
+                    tls.makefile.side_effect = lambda *args: stream
+                    if expected is None:
+                        with self.assertRaises(TransportError):
+                            fetch_https("https://example.org/", ["example.org"],
+                                        max_bytes=limit)
+                    else:
+                        self.assertEqual(fetch_https(
+                            "https://example.org/", ["example.org"],
+                            max_bytes=limit).body, expected)
+                self.assertTrue(stream.closed)
+                tls.close.assert_called()
+
     def test_truncated_declared_body_is_not_success(self) -> None:
         """Do not return a partial download as if it were complete."""
         from payer_policy.https_transport import TransportError, fetch_https
