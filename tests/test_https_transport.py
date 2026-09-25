@@ -8,7 +8,10 @@ from unittest.mock import Mock, patch
 
 
 @contextmanager
-def controlled_reply(reply: bytes, address: str = "8.8.8.8") -> Iterator[tuple]:
+def controlled_reply(
+    reply: bytes,
+    address: str = "8.8.8.8",
+) -> Iterator[tuple[Mock, Mock, Mock, Mock]]:
     """Supply one fake TCP/TLS peer to the real HTTP response parser."""
     raw = Mock()
     raw.getpeername.return_value = (address, 443)
@@ -17,7 +20,8 @@ def controlled_reply(reply: bytes, address: str = "8.8.8.8") -> Iterator[tuple]:
     context = Mock()
     context.wrap_socket.return_value = tls
     with (patch("socket.getaddrinfo", return_value=[
-            (2, 1, 6, "", (address, 443))]) as dns,
+            (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+             "", (address, 443))]) as dns,
           patch("socket.socket", return_value=raw) as make_socket,
           patch("ssl.create_default_context", return_value=context)):
         yield dns, make_socket, raw, tls
@@ -37,7 +41,8 @@ class HTTPSTransportTests(unittest.TestCase):
         tls.makefile.side_effect = lambda *args: io.BytesIO(response)
         context = Mock()
         context.wrap_socket.return_value = tls
-        answers = [(2, 1, 6, "", ("8.8.8.8", 443))]
+        answers = [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                    "", ("8.8.8.8", 443))]
         with (patch("socket.getaddrinfo", return_value=answers) as dns,
               patch("socket.socket", return_value=raw) as make_socket,
               patch("ssl.create_default_context", return_value=context)):
@@ -72,8 +77,10 @@ class HTTPSTransportTests(unittest.TestCase):
         context = Mock()
         context.wrap_socket.return_value = tls
         with (patch("socket.getaddrinfo", side_effect=[
-                [(2, 1, 6, "", ("8.8.8.8", 443))],
-                [(2, 1, 6, "", ("127.0.0.1", 443))],
+                [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                  "", ("8.8.8.8", 443))],
+                [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                  "", ("127.0.0.1", 443))],
               ]) as dns,
               patch("socket.socket", return_value=raw) as make_socket,
               patch("ssl.create_default_context", return_value=context)):
@@ -206,7 +213,8 @@ class HTTPSTransportTests(unittest.TestCase):
         context = Mock()
         context.wrap_socket.return_value = tls
         with (patch("socket.getaddrinfo", return_value=[
-                (2, 1, 6, "", ("8.8.8.8", 443))]),
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("8.8.8.8", 443))]),
               patch("socket.socket", return_value=raw),
               patch("ssl.create_default_context", return_value=context)):
             with self.assertRaisesRegex(TransportError, "incomplete"):
@@ -230,8 +238,10 @@ class HTTPSTransportTests(unittest.TestCase):
         context = Mock()
         context.wrap_socket.side_effect = tls_sockets
         with (patch("socket.getaddrinfo", side_effect=[
-                [(2, 1, 6, "", ("8.8.8.8", 443))],
-                [(2, 1, 6, "", ("1.1.1.1", 443))],
+                [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                  "", ("8.8.8.8", 443))],
+                [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                  "", ("1.1.1.1", 443))],
               ]) as dns,
               patch("socket.socket", side_effect=raws) as make_socket,
               patch("ssl.create_default_context", return_value=context)):
@@ -253,8 +263,10 @@ class HTTPSTransportTests(unittest.TestCase):
         """An unsafe companion address rejects the entire DNS result."""
         from payer_policy.https_transport import fetch_https
         with (patch("socket.getaddrinfo", return_value=[
-                (2, 1, 6, "", ("8.8.8.8", 443)),
-                (2, 1, 6, "", ("127.0.0.1", 443)),
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("8.8.8.8", 443)),
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("127.0.0.1", 443)),
               ]) as dns,
               patch("socket.socket") as make_socket):
             with self.assertRaisesRegex(ValueError, "public unicast"):
@@ -276,7 +288,8 @@ class HTTPSTransportTests(unittest.TestCase):
                 if failure:
                     context.wrap_socket.side_effect = failure
                 with (patch("socket.getaddrinfo", return_value=[
-                        (2, 1, 6, "", ("8.8.8.8", 443))]) as dns,
+                        (socket.AF_INET, socket.SOCK_STREAM,
+                         socket.IPPROTO_TCP, "", ("8.8.8.8", 443))]) as dns,
                       patch("socket.socket", return_value=raw) as make_socket,
                       patch("ssl.create_default_context", return_value=context)):
                     with self.assertRaises(TransportError):
@@ -296,7 +309,8 @@ class HTTPSTransportTests(unittest.TestCase):
         context = Mock()
         context.wrap_socket.return_value = tls
         with (patch("socket.getaddrinfo", return_value=[
-                (2, 1, 6, "", ("8.8.8.8", 443))]) as dns,
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("8.8.8.8", 443))]) as dns,
               patch("socket.socket", return_value=raw),
               patch("ssl.create_default_context", return_value=context)):
             with self.assertRaisesRegex(ValueError, "limit"):
@@ -325,7 +339,8 @@ class HTTPSTransportTests(unittest.TestCase):
         context = Mock()
         context.wrap_socket.return_value = tls
         with (patch("socket.getaddrinfo", return_value=[
-                (2, 1, 6, "", ("8.8.8.8", 443))]),
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("8.8.8.8", 443))]),
               patch("socket.socket", return_value=raw),
               patch("ssl.create_default_context", return_value=context)):
             with self.assertRaisesRegex(TransportError, "max_bytes"):
@@ -427,8 +442,10 @@ class HTTPSTransportTests(unittest.TestCase):
         raw = Mock()
         raw.connect.side_effect = TimeoutError("connect timed out")
         with (patch("socket.getaddrinfo", return_value=[
-                (2, 1, 6, "", ("8.8.8.8", 443)),
-                (2, 1, 6, "", ("1.1.1.1", 443)),
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("8.8.8.8", 443)),
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                 "", ("1.1.1.1", 443)),
               ]) as dns,
               patch("socket.socket", return_value=raw) as make_socket):
             with self.assertRaises(TransportError):

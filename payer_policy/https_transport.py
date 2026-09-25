@@ -19,6 +19,10 @@ from payer_policy.network_safety import (
 )
 
 
+# IPv4: host/port; IPv6 also includes flow information and scope ID.
+_SocketAddress = tuple[str, int] | tuple[str, int, int, int]
+
+
 class TransportError(OSError):
     """A checked request could not complete safely."""
 
@@ -113,8 +117,15 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
 
     response_class = _BoundedHTTPResponse
 
-    def __init__(self, host: str, address: tuple, family: socket.AddressFamily,
-                 *, timeout: float, context: ssl.SSLContext) -> None:
+    def __init__(
+        self,
+        host: str,
+        address: _SocketAddress,
+        family: socket.AddressFamily,
+        *,
+        timeout: float,
+        context: ssl.SSLContext,
+    ) -> None:
         """Keep the approved host and its selected numeric TCP endpoint."""
         super().__init__(host, port=443, timeout=timeout, context=context)
         self._address = address
@@ -137,7 +148,9 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
             raise
 
 
-def _resolve_checked_address(host: str) -> tuple[socket.AddressFamily, tuple]:
+def _resolve_checked_address(
+    host: str,
+) -> tuple[socket.AddressFamily, _SocketAddress]:
     """Reject all unsafe TCP answers before selecting the first endpoint.
 
     getaddrinfo supplies family/type/protocol and numeric socket addresses
