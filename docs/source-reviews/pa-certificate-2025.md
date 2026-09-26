@@ -13,8 +13,8 @@ implementation or a complete current-benefits determination.
   Division's January 1, 2025 Empire Plan Certificate for Participating Agencies.[9]
 - Registry unchanged. This note records a candidate without turning review
   findings into automatic download authorization or a blanket applicability claim.
-- No production code, schema, dependencies, policy library, or transport tests
-  against public sources were added.
+- This source-review increment added no production code, schema, dependencies,
+  policy library, or transport tests against public sources.
 
 ## Document identity and applicability evidence
 
@@ -105,7 +105,7 @@ application ingestion, or whole-request time limits.
 
 No legal conclusion about permissible reuse is made. Before recurring automated
 collection or bundling documents, obtain a supported access/reuse decision for
-that specific use. No permission request was sent on Steve's behalf.
+that specific use. No permission request was sent.
 
 ### Access failures and research limits
 
@@ -125,13 +125,15 @@ that specific use. No permission request was sent on Steve's behalf.
 - The new NYSHIP library was not exhaustively reviewed. Do not claim that no
   newer certificate, amendment or program notice exists.
 
-## Proposed next implementation increment — not approved or built
+## Original implementation proposal and approved follow-up
 
-Start with **offline download-candidate checks**, using synthetic fixtures rather
-than copying the reviewed certificate into the test repository. This keeps
-validation work independent of unresolved automated-access and reuse decisions.
+The source review proposed **offline download-candidate checks**, using synthetic
+fixtures rather than copying the reviewed certificate into the test repository.
+That bounded implementation was subsequently approved separately and completed;
+see the [implemented contract and verification](../document-validation.md).
+Automated-access and reuse decisions remain unresolved.
 
-Proposed contract:
+The original proposed contract was:
 
 ```text
 validate_pdf_candidate(result: FetchResult) -> None
@@ -148,11 +150,11 @@ validate_pdf_candidate(result: FetchResult) -> None
   signature may pass this deliberately shallow check; later structural parsing
   remains a separate, explicit requirement before indexing.
 
-Before coding, settle exact header/signature acceptance rules in the approval
-plan. Tests should cover accepted fixtures, each rejection, unchanged bytes and
-absence of network/filesystem side effects. Use failing tests first, then the
-smallest implementation; rerun existing offline and local TLS suites and update
-the contract documentation. No new parser dependency is proposed for this slice.
+The separate approved plan settled the rules: HTTP 200, no Content-Range,
+nonempty bytes, exactly one bare application/pdf content type, absent or single
+identity encoding, and %PDF- at byte zero. The implementation used failing tests
+first. Accepted/rejected fixtures, unchanged inputs, guarded I/O entry points,
+and offline transport composition are tested. No parser dependency was added.
 
 Original-file storage remains a later approval gate: define no-overwrite behavior,
 crash recovery, duplicate-content handling, source/request/final URLs, UTC retrieval
@@ -163,7 +165,7 @@ The source review is complete within these limits. Approval of this review did
 **not** approve validation code, storage code, live application downloads, broad
 crawling, or document redistribution.
 
-## Verification of this documentation increment
+## Historical verification of the source-review documentation increment
 
 - The documented minimum is Python 3.11; the established verification baseline
   is Python 3.11.16. A fresh baseline run passed all 51 offline tests and the
@@ -177,7 +179,8 @@ crawling, or document redistribution.
   Unused discovery URLs remain in the local ledger and are not cited as evidence.
 - The recorded primary-document byte count and fingerprint match the request log.
 - `git diff --check` found no whitespace errors; Git emitted line-ending notices.
-- The registry and runtime code are unchanged. Nothing was committed or pushed.
+- During that documentation increment, the registry and runtime code were
+  unchanged. No commit or push was performed as part of that increment.
 
 ## Sources
 

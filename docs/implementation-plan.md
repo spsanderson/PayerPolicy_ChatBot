@@ -1,6 +1,6 @@
 # Incremental implementation plan
 
-Status: direction approved by Steve; implementation in small test-first slices.
+Status: direction approved; implementation in small test-first slices.
 No phase is complete merely because its first module is implemented.
 
 ## Product boundary
@@ -92,10 +92,22 @@ The new NYSHIP library could not be fully inspected. No registry entry or access
 approval was added, and no application transport was exercised against a public
 source. Successful research retrieval is not a live application integration test.
 
-Next increment proposed for separate approval: offline PDF-candidate checks with
-synthetic fixtures. Define content-type, empty-body, content-encoding and signature
-rules, but do not label a shallow format check as full PDF or policy validation.
-The review contains the proposed contract, failure behavior and tests.
+### Module 5: Offline PDF-candidate validation — implemented building block
+
+`validate_pdf_candidate(result: FetchResult) -> None` checks HTTP 200, absence
+of Content-Range, nonempty bytes, one bare application/pdf content type,
+absent/identity content encoding, and %PDF- at byte zero. Content rejection
+raises `DocumentValidationError`; incorrect input types raise `TypeError`.
+See the [contract, decisions and runnable example](document-validation.md).
+
+No bytes are changed, parsed, decompressed, downloaded or stored. A marker-only
+fake PDF can pass; this does not establish structural validity or applicability.
+The helper does not automatically run inside the transport or acquisition worker.
+
+Verified on Python 3.11.16: 64 offline test methods and the separate local TLS
+test pass. Tests use synthetic responses, guard file/socket entry points, and
+pass real transport-parser output into the validator with controlled sockets.
+No public-source integration, dependency or registry permission was added.
 
 Original-file storage, structural parsing and live application acquisition remain
 later approval gates. Their plans must address immutable bytes, source/request/final
@@ -104,8 +116,9 @@ scope before a document library is created.
 
 Registry URL validation alone is not a network security boundary. The new
 transport enforces destination/address/redirect checks and a raw byte limit,
-but a future ingestion pipeline must still check MIME/content, permissions,
-empty documents, and provenance before saving downloaded content.
+but a future ingestion pipeline must call the candidate checker and still
+address permissions, structural parsing and provenance before indexing content.
+A standalone validator does not make a working ingestion pipeline.
 
 Then validate real source access and preserve a representative document set.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings

@@ -436,6 +436,43 @@ class HTTPSTransportTests(unittest.TestCase):
         raw.connect.assert_called_once_with((address, 443, 0, 0))
         tls.close.assert_called()
 
+    def test_fetch_result_passes_offline_candidate_check(self) -> None:
+        """Feed real HTTP parsing into validation, without a public socket."""
+        from payer_policy.document_validation import validate_pdf_candidate
+        from payer_policy.https_transport import fetch_https
+
+        # controlled_reply above supplies fake sockets, not a fake HTTP parser.
+        responses = (
+            b"HTTP/1.1 200 OK\r\nContent-Type: Application/PDF\r\n"
+            b"Content-Encoding: identity\r\nContent-Length: 5\r\n\r\n%PDF-",
+            b"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\n"
+            b"Transfer-Encoding: chunked\r\n\r\n5\r\n%PDF-\r\n0\r\n\r\n",
+        )
+        for response in responses:
+            with self.subTest(response=response):
+                with controlled_reply(response):
+                    result = fetch_https("https://example.org/a",
+                                         ["example.org"])
+                self.assertIsNone(validate_pdf_candidate(result))
+                self.assertEqual(result.body, b"%PDF-")
+
+    def test_fetch_result_rejects_html_candidate(self) -> None:
+        """A successful fetch is not automatically a PDF candidate."""
+        from payer_policy.document_validation import (
+            DocumentValidationError, validate_pdf_candidate,
+        )
+        from payer_policy.https_transport import fetch_https
+
+        for content_type in (b"text/html", b"application/pdf"):
+            response = (b"HTTP/1.1 200 OK\r\nContent-Type: " + content_type +
+                        b"\r\nContent-Length: 18\r\n\r\n<html>login</html>")
+            with self.subTest(content_type=content_type):
+                with controlled_reply(response):
+                    result = fetch_https("https://example.org/a.pdf",
+                                         ["example.org"])
+                with self.assertRaises(DocumentValidationError):
+                    validate_pdf_candidate(result)
+
     def test_connection_timeout_does_not_retry_or_change_address(self) -> None:
         """A failed connect ends the request rather than choosing another IP."""
         from payer_policy.https_transport import TransportError, fetch_https
