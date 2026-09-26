@@ -31,14 +31,18 @@ administration of the NYSHIP Empire Plan Hospital Program.
   keeps normal hostname-based TLS certificate checks, and rechecks redirects.
   See the [transport contract and limits](docs/https-transport.md). It is not
   an automatic downloader or permission to crawl an approved host.
-- Standard-library unit tests: 51 test methods pass on Python 3.11.16; a
+- `payer_policy.document_validation.validate_pdf_candidate`: checks status,
+  PDF content type, encoding, empty bytes, and the opening marker without I/O.
+  It accepts a candidate, not a valid or safe policy. See the
+  [contract and offline example](docs/document-validation.md).
+- Standard-library unit tests: 64 test methods pass on Python 3.11.16; a
   separate local-loopback TLS integration test also passes. No third-party
   runtime dependency was added. The integration test needs OpenSSL to generate
   a temporary certificate.
 
 A fingerprint identifies content, not authenticity or plan applicability.
-Empty bytes can be fingerprinted; a later download validator must reject empty
-or invalid documents before ingestion.
+Empty bytes can be fingerprinted; the candidate validator now rejects them.
+Full PDF parsing and policy applicability checks remain later requirements.
 
 ## Run the tests (development)
 
@@ -110,6 +114,7 @@ payer_policy/provenance.py      Content fingerprint function
 payer_policy/source_registry.py Source validation, parsing, and local loading
 payer_policy/network_safety.py  Pure destination, address, and redirect checks
 payer_policy/https_transport.py  Checked-address HTTPS GET building block
+payer_policy/document_validation.py Offline PDF-candidate checks
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
 tests/integration/              Explicit local-loopback TLS test
@@ -119,6 +124,7 @@ docs/implementation-plan.md     Living delivery plan
 docs/source-definition.md       Validator contract and example
 docs/network-safety.md          Offline safety contract and executable example
 docs/https-transport.md          HTTPS transport contract and limitations
+docs/document-validation.md     Candidate-check contract and offline example
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and

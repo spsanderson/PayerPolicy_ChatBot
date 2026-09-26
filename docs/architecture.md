@@ -1,13 +1,13 @@
 # PayerPolicy — System Architecture
 
-**Windows-first · Empire Plan Hospital Program · Phase 1, increment 5**
+**Windows-first · Empire Plan Hospital Program · Phase 1, Module 5**
 
 Content fingerprinting, source validation, JSON parsing, and local registry
 loading are implemented. Offline URL, resolved-address, and redirect/history
 checks are implemented too. A bounded checked-address HTTPS GET building block
-now uses these checks; one reviewed reference entry is checked in. Document
-storage, an automatic acquisition worker, and the rest of the pipeline remain
-planned.
+now uses these checks; one reviewed reference entry is checked in. A standalone
+offline PDF-candidate checker is implemented too. Document storage, an automatic
+acquisition worker, and the rest of the pipeline remain planned.
 
 This Markdown version uses Mermaid for diagram rendering on GitHub and in
 Mermaid-enabled Markdown viewers. The component table below remains readable
@@ -42,6 +42,8 @@ flowchart TB
         addresses["IMPLEMENTED: validate_resolved_addresses() — supplied answers only"]
         redirects["IMPLEMENTED: validate_redirect() — target / history / hop limit"]
         transport["IMPLEMENTED: bounded HTTPS GET — checked IP / verified TLS / manual redirects"]
+        candidate["IMPLEMENTED: validate_pdf_candidate() — response labels / opening marker"]
+        acquisition -.-> candidate
         redirects --> destination
         acquisition -.-> transport
         transport --> destination
@@ -69,7 +71,7 @@ flowchart TB
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
     class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
-    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport implemented;
+    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate implemented;
 ```
 
 **Legend:** Green nodes are implemented functions or checked-in data. Dashed nodes and arrows
@@ -89,6 +91,7 @@ it does not imply that a packaged application exists.
 | `validate_resolved_addresses()` | Reject a whole supplied answer set if any address is unsafe | Implemented and offline-tested; does not resolve DNS |
 | `validate_redirect()` | Recheck target, caller history, loops, and hop limit | Implemented and offline-tested; does not follow redirects |
 | Checked-address HTTPS GET | DNS-answer validation, pinned numeric TCP, verified TLS, manual redirects, bounded body | Implemented; offline unit tests and local TLS test, no public fetch verified |
+| `validate_pdf_candidate()` | Check status, labels and opening marker without I/O | Implemented; offline-tested, not structural PDF validation |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | Acquisition worker | Source registry, fetching, and download validation | Planned |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -119,6 +122,10 @@ Foundation components with no external dependencies:
   pins the selected address, verifies hostname TLS identity, and bounds bytes
   in memory. It has no reviewed live-source integration. See the
   [transport contract](https-transport.md).
+- **PDF-candidate checks:** reject unsuitable response labels or opening bytes,
+  not malformed PDF structure. See the [contract](document-validation.md).
+  Offline tests explicitly pass transport output to the checker; the production
+  transport does not call it automatically.
 
 Only the loader reads a local file. The transport can perform one reviewed-host
 HTTPS GET when called, but the source registry does not call it. No component
@@ -126,11 +133,13 @@ stores retrieved policies, accesses a database, or calls a model.
 
 ## Next small increment
 
-Scope and approve source-access review and document validation/storage before
-building an acquisition worker. The transport does not check whether the host
-permits automated access, whether bytes are a valid policy, or whether that
-policy governs a particular benefit. It also lacks a hard DNS-resolution
-or whole-request deadline. Keep these limits explicit in a future live test.
+The source review and offline candidate checker are complete within their
+stated boundaries. Scope and separately approve original-file storage,
+structural parsing and live acquisition before building an acquisition worker.
+Automated-access/reuse permission and current-date policy completeness remain
+unresolved. Neither transport nor candidate detection establishes that a policy
+governs a benefit. The transport also lacks a hard DNS-resolution or whole-request
+deadline. Keep these limits explicit in a future live test.
 
 ## Trust boundary
 
@@ -145,4 +154,5 @@ or whole-request deadline. Keep these limits explicit in a future live test.
 - [Source-definition contract](source-definition.md)
 - [Network-safety contract](network-safety.md)
 - [HTTPS transport contract](https-transport.md)
+- [PDF-candidate contract](document-validation.md)
 - [Project README](../README.md)
