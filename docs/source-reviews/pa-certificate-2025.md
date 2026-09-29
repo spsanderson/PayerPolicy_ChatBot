@@ -156,14 +156,14 @@ identity encoding, and %PDF- at byte zero. The implementation used failing tests
 first. Accepted/rejected fixtures, unchanged inputs, guarded I/O entry points,
 and offline transport composition are tested. No parser dependency was added.
 
-Original-file storage remains a later approval gate: define no-overwrite behavior,
-crash recovery, duplicate-content handling, source/request/final URLs, UTC retrieval
-time, selected response metadata and fingerprint together. Do not save partial
-results or treat an orphaned file as a completed library record.
-
-The source review is complete within these limits. Approval of this review did
-**not** approve validation code, storage code, live application downloads, broad
-crawling, or document redistribution.
+The source review and PDF-candidate checker were completed first. A separate,
+subsequently approved [offline storage increment](../document-storage.md) now
+preserves synthetic candidate originals with receipts and verified loads. This
+is not live application acquisition or policy-library authorization; no PA
+certificate was stored by the new helper. Structural parsing, automated
+collection, and redistribution remain separate decisions. The original review
+approval alone did **not** authorize validation code, storage code, crawling,
+or document redistribution; each implemented code increment had its own scope.
 
 ## Historical verification of the source-review documentation increment
 

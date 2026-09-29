@@ -109,10 +109,32 @@ test pass. Tests use synthetic responses, guard file/socket entry points, and
 pass real transport-parser output into the validator with controlled sockets.
 No public-source integration, dependency or registry permission was added.
 
-Original-file storage, structural parsing and live application acquisition remain
-later approval gates. Their plans must address immutable bytes, source/request/final
-URLs, UTC retrieval times, fingerprints, interruption recovery and explicit access
-scope before a document library is created.
+### Module 6: Offline original-byte storage — implemented building block
+
+`save_pdf_candidate(root, result, *, retrieval_id, source_id,
+requested_url, retrieved_at, max_bytes=10_000_000)` writes unchanged candidate
+bytes plus a versioned receipt under a caller-chosen local Windows directory.
+`load_saved_candidate(root, retrieval_id, *, max_bytes=10_000_000)` bounds the
+read and checks candidate rules, receipt structure, byte count, and SHA-256
+against the original. See the [contract and runnable example](document-storage.md).
+A 32-character lowercase hex ID identifies each retrieval, not each file
+content. Identical same-ID retries return the verified original; different
+bytes or metadata cannot replace the first record. Same-root staging and
+Windows directory rename prevent an interrupted pre-publication attempt from
+appearing as completed. Orphan staging folders require manual review/cleanup;
+file flushing is not a power-loss guarantee. The storage root must be trusted.
+
+Verified on Python 3.11.16: 80 offline test methods ran (one optional Windows
+link-creation case skipped on the checked machine) plus one separate local
+loopback TLS test. The 16 new tests use synthetic bytes and temporary folders,
+including killed child processes, competing writers, disk errors, malformed
+receipts, and offline composition with actual transport-parser output. No
+public policy was fetched or stored; no source, collection, redistribution,
+structural parsing, or applicability gate was approved by this module.
+
+Structural parsing and live application acquisition remain later approval
+gates. This storage helper does not make a document library or connect the
+source registry to transport, and access/redistribution rights remain unresolved.
 
 Registry URL validation alone is not a network security boundary. The new
 transport enforces destination/address/redirect checks and a raw byte limit,
@@ -132,8 +154,9 @@ Fingerprint tests alone do not satisfy this gate.
 
 ## Phase 2: End-to-end slice (planned)
 
-Modules: download validation; immutable original storage; extraction; keyword
-and semantic index; retrieval; provider adapter; citation viewer.
+Modules: approved-source acquisition and candidate validation; integrate the
+existing original-byte storage helper; extraction; keyword and semantic index;
+retrieval; provider adapter; citation viewer.
 Gate: real document -> real answer -> exact original passage, with provenance.
 
 ## Phase 3: Policy lifecycle (planned)

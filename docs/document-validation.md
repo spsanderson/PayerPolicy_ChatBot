@@ -122,5 +122,6 @@ Baseline: Python 3.11.16; documented minimum remains Python 3.11.
 
 The original 51 offline methods remain covered. The new checks do not establish
 that a real policy document can be safely parsed, indexed, or redistributed.
-Original-file storage, structural parsing, and live application acquisition
-remain separate approval gates.
+At the time of this validator increment, storage remained a separate gate.
+A separately approved [offline storage helper](document-storage.md) now exists;
+structural parsing and live acquisition still need separate scope and approval.

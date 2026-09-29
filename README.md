@@ -35,14 +35,20 @@ administration of the NYSHIP Empire Plan Hospital Program.
   PDF content type, encoding, empty bytes, and the opening marker without I/O.
   It accepts a candidate, not a valid or safe policy. See the
   [contract and offline example](docs/document-validation.md).
-- Standard-library unit tests: 64 test methods pass on Python 3.11.16; a
+- `payer_policy.document_storage.save_pdf_candidate` and
+  `load_saved_candidate`: preserve exact supplied candidate bytes with a local
+  retrieval receipt, and recheck them before loading. Same-ID conflicts cannot
+  replace a prior record. See the [storage contract and offline example](docs/document-storage.md).
+  This is not an automatic download or a complete document library.
+Standard-library unit tests: 80 run on Python 3.11.16, with one
+  optional Windows link-creation test skipped on the checked machine;
   separate local-loopback TLS integration test also passes. No third-party
-  runtime dependency was added. The integration test needs OpenSSL to generate
-  a temporary certificate.
+  runtime dependency was added. The TLS test needs OpenSSL for its certificate.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
 Full PDF parsing and policy applicability checks remain later requirements.
+The storage helper does not make these checks or authorize collection.
 
 ## Run the tests (development)
 
@@ -88,7 +94,7 @@ a development requirement, not the intended end-user installation experience.
 - [Development conventions](CONTRIBUTING.md): small test-first changes and living
   documentation.
 
-## Intended product (not implemented)
+## Intended end-to-end product (not implemented)
 
 Official-source discovery -> immutable originals and version metadata ->
 PDF/HTML extraction and OCR -> reviewable chunks -> hybrid retrieval ->
@@ -115,6 +121,7 @@ payer_policy/source_registry.py Source validation, parsing, and local loading
 payer_policy/network_safety.py  Pure destination, address, and redirect checks
 payer_policy/https_transport.py  Checked-address HTTPS GET building block
 payer_policy/document_validation.py Offline PDF-candidate checks
+payer_policy/document_storage.py    Windows-local candidate snapshots
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
 tests/integration/              Explicit local-loopback TLS test
@@ -125,6 +132,7 @@ docs/source-definition.md       Validator contract and example
 docs/network-safety.md          Offline safety contract and executable example
 docs/https-transport.md          HTTPS transport contract and limitations
 docs/document-validation.md     Candidate-check contract and offline example
+docs/document-storage.md        Storage contract and offline example
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and
