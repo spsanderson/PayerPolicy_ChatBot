@@ -5,9 +5,15 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
 from payer_policy.https_transport import FetchResult
 from payer_policy.provenance import fingerprint_document
+
+if TYPE_CHECKING:
+    # Imported for type hints only; the runtime import stays local so the
+    # storage module loads on demand during tests.
+    from payer_policy.document_storage import StoredCandidate
 
 
 RETRIEVAL_ID = "1234567890abcdef1234567890abcdef"
@@ -20,7 +26,7 @@ def candidate(body: bytes = b"%PDF-synthetic") -> FetchResult:
                        (("Content-Type", "application/pdf"),), body)
 
 
-def save_fixture(root: Path, **changes: object) -> object:
+def save_fixture(root: Path, **changes: object) -> "StoredCandidate":
     """Save a synthetic retrieval with explicit, repeatable metadata."""
     from payer_policy.document_storage import save_pdf_candidate
 
