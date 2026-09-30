@@ -224,7 +224,10 @@ def save_pdf_candidate(
     _check_root(root)
     records, staging = root / "records", root / ".staging"
     for directory in (records, staging):
-        directory.mkdir(exist_ok=True)
+        try:
+            directory.mkdir(exist_ok=True)
+        except FileExistsError as exc:
+            raise ValueError("storage component is not a directory") from exc
         _check_path(directory)
         if not directory.is_dir():
             raise ValueError("storage component is not a directory")
