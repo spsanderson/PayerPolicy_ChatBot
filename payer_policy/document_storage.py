@@ -307,7 +307,7 @@ def load_saved_candidate(
         expected = _make_receipt(
             response, retrieval_id, receipt["source_id"],
             receipt["requested_url"], instant)
-        if receipt != expected or set(receipt) != set(expected):
+        if receipt != expected:
             raise ValueError("receipt does not match original")
     except (UnicodeError, json.JSONDecodeError, ValueError, TypeError,
             KeyError, OverflowError, RecursionError) as exc:
