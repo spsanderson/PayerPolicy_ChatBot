@@ -42,7 +42,7 @@ class DocumentStorageTests(unittest.TestCase):
 
         with TemporaryDirectory() as directory:
             root = Path(directory)
-            stored = save_fixture(root)
+            stored = save_fixture(root, max_bytes=len(candidate().body))
             record = root / "records" / RETRIEVAL_ID
             self.assertEqual(stored.original_path, record / "original.bin")
             self.assertEqual(stored.receipt_path, record / "receipt.json")
@@ -66,8 +66,11 @@ class DocumentStorageTests(unittest.TestCase):
             self.assertEqual(list((root / ".staging").iterdir()), [])
 
     def test_invalid_inputs_do_not_create_records(self) -> None:
-        """Reject bad content and metadata before creating any directories."""
+        """Reject bad input; oversized bodies never reach receipt work."""
         from dataclasses import replace
+        from unittest.mock import patch
+
+        from payer_policy import document_storage as storage
 
         cases = [
             {"result": candidate(b"HTML")}, {"result": candidate(b"")},
@@ -94,6 +97,24 @@ class DocumentStorageTests(unittest.TestCase):
                     with self.assertRaises((TypeError, ValueError)):
                         save_fixture(root, **changes)
                     self.assertEqual(list(root.iterdir()), [])
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = candidate()
+            with (patch.object(storage, "_make_receipt",
+                               wraps=storage._make_receipt) as make_receipt,
+                  patch.object(storage, "_encode_receipt",
+                               wraps=storage._encode_receipt) as encode,
+                  patch.object(storage, "fingerprint_document",
+                               wraps=storage.fingerprint_document) as hash_):
+                with self.assertRaisesRegex(
+                        ValueError, "^original exceeds max_bytes$"):
+                    save_fixture(root, result=result,
+                                 max_bytes=len(result.body) - 1)
+                make_receipt.assert_not_called()
+                encode.assert_not_called()
+                hash_.assert_not_called()
+            self.assertEqual(list(root.iterdir()), [])
 
     def test_receipt_preserves_selected_metadata_only(self) -> None:
         """Keep UTC time and exact useful header pairs, not cookies."""

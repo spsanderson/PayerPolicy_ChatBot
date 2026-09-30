@@ -205,16 +205,21 @@ def save_pdf_candidate(
 ) -> StoredCandidate:
     """Publish unchanged bytes and a receipt; verify before returning.
 
+    validate_pdf_candidate (document_validation.py) checks types and the
+    PDF marker before measuring the body. Reject oversized bytes before
+    receipt creation or hashing; the caller already holds these bytes.
+
     mkdtemp creates unique same-root staging; os.rename publishes after
     both files are flushed. An identical same-ID retry returns the prior
     verified record, while conflicting input cannot overwrite it.
     https://docs.python.org/3.11/library/tempfile.html#tempfile.mkdtemp
     """
     _check_limit(max_bytes)
-    receipt = _make_receipt(result, retrieval_id, source_id,
-                            requested_url, retrieved_at)
+    validate_pdf_candidate(result)
     if len(result.body) > max_bytes:
         raise ValueError("original exceeds max_bytes")
+    receipt = _make_receipt(result, retrieval_id, source_id,
+                            requested_url, retrieved_at)
     receipt_bytes = _encode_receipt(receipt)
     _check_root(root)
     records, staging = root / "records", root / ".staging"
