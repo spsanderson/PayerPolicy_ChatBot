@@ -21,8 +21,12 @@ PdfInspection(retrieval_id: str, sha256: str,
 ```
 
 The fingerprint is the verified receipt's SHA-256 byte identity. An encrypted
-PDF reports `is_encrypted=True` and `page_count=None`: no password is tried or
-pages opened. An accessible PDF with zero pages reports `page_count=0`.
+PDF that initializes successfully reports `is_encrypted=True` and
+`page_count=None`. The application supplies no password, never explicitly
+decrypts, and never counts encrypted pages. During initialization,
+[pypdf 6.19.0's encryption handler](https://pypdf.readthedocs.io/en/6.19.0/_modules/pypdf/_reader.html)
+implicitly tries an **empty password**. An accessible PDF with zero pages
+reports `page_count=0`.
 `pypdf` can reject PDFs that another viewer repairs; a count here is only a
 reader-reported structural fact, **not** proof every page renders, that the
 file is harmless, or that it belongs to a particular policy. No page text,
@@ -36,7 +40,17 @@ character recognition (OCR).
   Missing, changed, oversized, or unsafe saved records raise
   `StorageIntegrityError`; they are **not** silently reclassified as malformed
   PDFs. The root must be a trusted, existing local Windows directory.
-- PDF read failures reported by the parser raise `PdfInspectionError`. A
+- Supported parser failures raise `PdfInspectionError` with the generic message
+  `cannot inspect PDF structure` and the underlying exception as `__cause__`.
+  This covers the
+  [pypdf error family and separate dependency error](https://pypdf.readthedocs.io/en/6.19.0/modules/errors.html)
+  (`PyPdfError`, `DependencyError`), plus tested malformed-data failures
+  (`AttributeError`, `KeyError`, `TypeError`) and unsupported encryption
+  (`NotImplementedError`). A missing encryption backend is covered by a
+  simulation in tests, not by removing installed dependencies. The catch
+  applies only to reader construction, encryption status, and page counting;
+  loader failures stay outside it. `MemoryError`, `KeyboardInterrupt`, and
+  `SystemExit` propagate unchanged. Other exception classes are not covered. A
   `%PDF-` marker alone passes the earlier candidate check but fails this
   structural attempt. Parser acceptance is not full PDF conformance testing.
 - The default saved-original limit is **10,000,000 bytes**, inherited from the
@@ -49,6 +63,18 @@ character recognition (OCR).
   can change both. Source authority, collection/reuse rights, policy dates,
   and individual coverage remain separate decisions. No live certificate
   collection is authorized by this module.
+
+## Verification of the PR #35 correction
+
+On Python 3.11.16 with pypdf 6.19.0, all 16 inspection test methods passed.
+The full offline suite ran 96 methods: 95 passed and one optional Windows
+link-creation case skipped; the separate local TLS integration test passed.
+Four new real synthetic-PDF cases cover a missing catalog page entry, missing
+encryption revision, a wrong encryption-length type, and an unsupported
+version. Simulations cover the pypdf error family at each reader step and a
+missing encryption backend. Additional checks keep loader errors, memory
+exhaustion, and process interrupts separate. Parser-error tests verify the
+original and receipt stay unchanged and the underlying cause is retained.
 
 ## Setup and offline example
 

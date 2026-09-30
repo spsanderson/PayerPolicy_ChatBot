@@ -1,10 +1,19 @@
-"""Offline PDF-inspection tests with in-memory PDFs and local snapshots."""
+"""Offline PDF-inspection tests with in-memory PDFs and local snapshots.
+
+PdfWriter adds blank pages, encrypts them, and writes to a byte stream:
+https://pypdf.readthedocs.io/en/6.19.0/modules/PdfWriter.html
+save_pdf_candidate stores bytes and a receipt for real loader checks:
+../payer_policy/document_storage.py
+Mocks raise selected failures without changing the installed dependencies:
+https://docs.python.org/3/library/unittest.mock.html#unittest.mock.Mock
+"""
 import sys
 import unittest
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from pypdf import PdfWriter
 
@@ -43,6 +52,170 @@ def save_fixture(root: Path, body: bytes) -> None:
 class DocumentInspectionTests(unittest.TestCase):
     """Inspect saved candidates without changing their original bytes."""
 
+    def assert_parser_failure(
+        self, body: bytes, cause: type[Exception],
+        expected: Exception | None = None,
+    ) -> None:
+        """Check a parser failure keeps its cause and both saved files."""
+        from payer_policy.document_inspection import (
+            PdfInspectionError, inspect_saved_pdf,
+        )
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            save_fixture(root, body)
+            original = root / "records" / RETRIEVAL_ID / "original.bin"
+            receipt = original.with_name("receipt.json")
+            before = (original.read_bytes(), receipt.read_bytes())
+            try:
+                with self.assertRaises(PdfInspectionError) as raised:
+                    inspect_saved_pdf(root, RETRIEVAL_ID)
+                self.assertIsInstance(raised.exception.__cause__, cause)
+                if expected is not None:
+                    self.assertIs(raised.exception.__cause__, expected)
+                self.assertEqual(str(raised.exception),
+                                 "cannot inspect PDF structure")
+            finally:
+                self.assertEqual(
+                    (original.read_bytes(), receipt.read_bytes()), before,
+                )
+
+    def test_missing_catalog_pages_is_wrapped(self) -> None:
+        """A catalog without pages fails without changing saved files."""
+        writer = PdfWriter()
+        writer.add_blank_page(width=72, height=72)
+        del writer.root_object["/Pages"]
+        output = BytesIO()
+        writer.write(output)
+        self.assert_parser_failure(output.getvalue(), AttributeError)
+
+    def test_missing_encryption_revision_is_wrapped(self) -> None:
+        """A missing encryption field keeps its parser cause and files."""
+        body = pdf_with_pages(1, encrypted=True)
+        self.assertIn(b"/R 3", body)
+        self.assert_parser_failure(
+            body.replace(b"/R 3", b"/X 3", 1), KeyError,
+        )
+
+    def test_invalid_encryption_length_is_wrapped(self) -> None:
+        """A word used as a key length keeps its parser cause and files."""
+        body = pdf_with_pages(1, encrypted=True)
+        self.assertIn(b"/Length 128", body)
+        self.assert_parser_failure(
+            body.replace(b"/Length 128", b"/Length /xx", 1), TypeError,
+        )
+
+    def test_unsupported_encryption_version_is_wrapped(self) -> None:
+        """An unsupported lock format keeps its parser cause and files."""
+        body = pdf_with_pages(1, encrypted=True)
+        self.assertIn(b"/V 2", body)
+        self.assert_parser_failure(
+            body.replace(b"/V 2", b"/V 9", 1), NotImplementedError,
+        )
+
+    def test_pypdf_error_family_at_each_parser_seam(self) -> None:
+        """Simulated family errors keep their cause at each parser step."""
+        from pypdf.errors import ParseError
+
+        for seam in ("construction", "encryption", "page_count"):
+            with self.subTest(seam=seam):
+                failure = ParseError("synthetic parser failure")
+                reader = MagicMock()
+                reader.is_encrypted = False
+                if seam == "encryption":
+                    type(reader).is_encrypted = PropertyMock(
+                        side_effect=failure,
+                    )
+                elif seam == "page_count":
+                    reader.pages.__len__.side_effect = failure
+                with patch(
+                    "payer_policy.document_inspection.PdfReader",
+                    return_value=reader,
+                    side_effect=failure if seam == "construction" else None,
+                ):
+                    self.assert_parser_failure(
+                        pdf_with_pages(1), ParseError, failure,
+                    )
+
+    def test_missing_encryption_backend_simulation_is_wrapped(self) -> None:
+        """Simulate a missing backend; keep its cause and saved files."""
+        from pypdf.errors import DependencyError
+
+        failure = DependencyError("simulated missing encryption backend")
+        with patch("payer_policy.document_inspection.PdfReader",
+                   side_effect=failure):
+            self.assert_parser_failure(
+                pdf_with_pages(1, encrypted=True), DependencyError, failure,
+            )
+
+    def test_loader_failures_are_not_wrapped(self) -> None:
+        """Storage and input failures pass through before parsing starts."""
+        from payer_policy.document_inspection import inspect_saved_pdf
+        from payer_policy.document_storage import StorageIntegrityError
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            save_fixture(root, pdf_with_pages(1))
+            original = root / "records" / RETRIEVAL_ID / "original.bin"
+            receipt = original.with_name("receipt.json")
+            before = (original.read_bytes(), receipt.read_bytes())
+            for cause in (StorageIntegrityError, TypeError, ValueError):
+                with self.subTest(cause=cause.__name__):
+                    failure = cause("simulated loader failure")
+                    with (
+                        patch(
+                            "payer_policy.document_inspection."
+                            "load_saved_candidate", side_effect=failure,
+                        ),
+                        patch("payer_policy.document_inspection.PdfReader")
+                        as parser,
+                    ):
+                        with self.assertRaises(cause) as raised:
+                            inspect_saved_pdf(root, RETRIEVAL_ID)
+                        self.assertIs(raised.exception, failure)
+                        self.assertIsNone(raised.exception.__cause__)
+                        parser.assert_not_called()
+                    self.assertEqual(
+                        (original.read_bytes(), receipt.read_bytes()), before,
+                    )
+
+    def test_resource_and_process_exceptions_are_not_wrapped(self) -> None:
+        """Stops and memory exhaustion pass through every parser step."""
+        from payer_policy.document_inspection import inspect_saved_pdf
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            save_fixture(root, pdf_with_pages(1))
+            original = root / "records" / RETRIEVAL_ID / "original.bin"
+            receipt = original.with_name("receipt.json")
+            before = (original.read_bytes(), receipt.read_bytes())
+            for cause in (MemoryError, KeyboardInterrupt, SystemExit):
+                for seam in ("construction", "encryption", "page_count"):
+                    with self.subTest(cause=cause.__name__, seam=seam):
+                        failure = cause("simulated stop")
+                        reader = MagicMock()
+                        reader.is_encrypted = False
+                        if seam == "encryption":
+                            type(reader).is_encrypted = PropertyMock(
+                                side_effect=failure,
+                            )
+                        elif seam == "page_count":
+                            reader.pages.__len__.side_effect = failure
+                        with patch(
+                            "payer_policy.document_inspection.PdfReader",
+                            return_value=reader,
+                            side_effect=(failure if seam == "construction"
+                                         else None),
+                        ):
+                            with self.assertRaises(cause) as raised:
+                                inspect_saved_pdf(root, RETRIEVAL_ID)
+                            self.assertIs(raised.exception, failure)
+                            self.assertIsNone(raised.exception.__cause__)
+                        self.assertEqual(
+                            (original.read_bytes(), receipt.read_bytes()),
+                            before,
+                        )
+
     def test_reports_page_count_from_verified_snapshot(self) -> None:
         """A structural count stays tied to the original byte identity."""
         from payer_policy.document_inspection import inspect_saved_pdf
@@ -66,7 +239,7 @@ class DocumentInspectionTests(unittest.TestCase):
                              before)
 
     def test_encrypted_pdf_has_no_claimed_page_count(self) -> None:
-        """Report a locked PDF without opening its pages or a password."""
+        """Report encryption without application decryption or counting."""
         from payer_policy.document_inspection import inspect_saved_pdf
         from payer_policy.provenance import fingerprint_document
 

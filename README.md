@@ -45,7 +45,7 @@ administration of the NYSHIP Empire Plan Hospital Program.
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-The unittest suite ran 88 methods on Python 3.11.16: 87 passed and one
+The unittest suite ran 96 methods on Python 3.11.16: 95 passed and one
 optional Windows link-creation test skipped on the checked machine. A
 separate local-loopback TLS integration test passed. The inspection
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.

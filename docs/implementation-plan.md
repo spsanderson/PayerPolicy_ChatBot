@@ -153,8 +153,8 @@ CPU/memory cap. Strict parsing may reject files other viewers repair. Do not
 connect arbitrary public PDFs to unattended ingestion without separately
 reviewed resource isolation and permission to collect.
 
-Verified on Python 3.11.16 with pypdf 6.19.0: 88 offline test methods ran
-(87 passed, one optional Windows link-creation case skipped), and the separate
+Initial verification on Python 3.11.16 with pypdf 6.19.0: 88 offline test methods
+ran (87 passed, one optional Windows link-creation case skipped), and the separate
 local-loopback TLS test passed. Eight new tests use synthetic PDFs and temporary
 storage; they cover multipage, encrypted, empty, marker-only, malformed,
 damaged-record, size/path, and no-network cases. The documentation example
@@ -162,8 +162,20 @@ was not separately executed; its code path is exercised by the tests. No
 public source was collected or redistributed. The Windows installer remains
 planned.
 
-Registry URL validation alone is not a network security boundary. The new
-transport enforces destination/address/redirect checks and a raw byte limit,
+The separately approved PR #35 correction broadens the explicit parser-only
+error handler to the pypdf error family, dependency errors, and reproduced
+malformed-data/unsupported-encryption failures. Storage errors remain outside
+that handler, and interrupts or memory exhaustion are not wrapped. The
+original exception is retained as the cause of `PdfInspectionError`.
+Verification on Python 3.11.16: 96 offline methods ran (95 passed, one optional
+Windows link test skipped), including 16 inspection methods; the separate
+local TLS test passed. This correction adds eight regression/boundary methods,
+not a new pipeline component. The [inspection contract](document-inspection.md)
+distinguishes real malformed-PDF fixtures from dependency simulations and
+clarifies that pypdf internally tries an empty password during initialization.
+
+Registry URL validation alone is not a network security boundary.
+The transport enforces destination/address/redirect checks and a raw byte limit,
 but a future ingestion pipeline must call the candidate checker and still
 address permissions, deeper PDF parsing and provenance before indexing content.
 A standalone validator does not make a working ingestion pipeline.
