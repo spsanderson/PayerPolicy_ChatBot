@@ -35,25 +35,38 @@ administration of the NYSHIP Empire Plan Hospital Program.
   PDF content type, encoding, empty bytes, and the opening marker without I/O.
   It accepts a candidate, not a valid or safe policy. See the
   [contract and offline example](docs/document-validation.md).
-- Standard-library unit tests: 64 test methods pass on Python 3.11.16; a
-  separate local-loopback TLS integration test also passes. No third-party
-  runtime dependency was added. The integration test needs OpenSSL to generate
-  a temporary certificate.
+- `payer_policy.document_storage.save_pdf_candidate` and
+  `load_saved_candidate`: preserve exact supplied candidate bytes with a local
+  retrieval receipt, and recheck them before loading. Same-ID conflicts cannot
+  replace a prior record. See the [storage contract and offline example](docs/document-storage.md).
+  This is not an automatic download or a complete document library.
+- `payer_policy.document_inspection.inspect_saved_pdf`: opens verified saved
+  bytes offline with pypdf and reports encryption and, when accessible, a page
+  count. It does not extract text or validate the whole PDF. See the
+  [inspection contract](docs/document-inspection.md).
+
+The unittest suite ran 96 methods on Python 3.11.16: 95 passed and one
+optional Windows link-creation test skipped on the checked machine. A
+separate local-loopback TLS integration test passed. The inspection
+dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
-Full PDF parsing and policy applicability checks remain later requirements.
+Full PDF validation, text extraction, and policy applicability checks remain
+later requirements. Storage and inspection do not authorize collection.
 
 ## Run the tests (development)
 
-Requires Python 3.11 or newer. From the repository root:
+Requires Python 3.11 or newer. From the repository root, install the pinned
+PDF parser in a development environment before running the tests:
 
 ```console
+python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 python -m unittest discover -s tests/integration -v
 ```
 
-The second command tests a real local TLS connection; it needs the OpenSSL
+The third command tests a real local TLS connection; it needs the OpenSSL
 command-line tool and skips if unavailable. No public policy site is contacted.
 
 Example in Python, launched from the repository root:
@@ -88,7 +101,7 @@ a development requirement, not the intended end-user installation experience.
 - [Development conventions](CONTRIBUTING.md): small test-first changes and living
   documentation.
 
-## Intended product (not implemented)
+## Intended end-to-end product (not implemented)
 
 Official-source discovery -> immutable originals and version metadata ->
 PDF/HTML extraction and OCR -> reviewable chunks -> hybrid retrieval ->
@@ -115,6 +128,9 @@ payer_policy/source_registry.py Source validation, parsing, and local loading
 payer_policy/network_safety.py  Pure destination, address, and redirect checks
 payer_policy/https_transport.py  Checked-address HTTPS GET building block
 payer_policy/document_validation.py Offline PDF-candidate checks
+payer_policy/document_storage.py    Windows-local candidate snapshots
+payer_policy/document_inspection.py Offline PDF structural inspection
+requirements.txt                   Pinned runtime PDF parser
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
 tests/integration/              Explicit local-loopback TLS test
@@ -125,6 +141,8 @@ docs/source-definition.md       Validator contract and example
 docs/network-safety.md          Offline safety contract and executable example
 docs/https-transport.md          HTTPS transport contract and limitations
 docs/document-validation.md     Candidate-check contract and offline example
+docs/document-storage.md        Storage contract and offline example
+docs/document-inspection.md     Inspection contract and offline example
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and
