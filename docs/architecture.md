@@ -1,14 +1,15 @@
 # PayerPolicy — System Architecture
 
-**Windows-first · Empire Plan Hospital Program · Phase 1, Module 6**
+**Windows-first · Empire Plan Hospital Program · Phase 1, Module 7**
 
 Content fingerprinting, source validation, JSON parsing, and local registry
 loading are implemented. Offline URL, resolved-address, and redirect/history
 checks are implemented too. A bounded checked-address HTTPS GET building block
 now uses these checks; one reviewed reference entry is checked in. A standalone
-offline PDF-candidate checker and Windows-local original-byte snapshot helper
-are implemented too. Automatic acquisition, structural PDF parsing, a document
-library, and the rest of the pipeline remain planned.
+offline PDF-candidate checker, Windows-local original-byte snapshot helper,
+and a read-only inspector for encryption and page count are implemented too.
+Automatic acquisition, full PDF parsing/text extraction, a document library,
+and the rest of the pipeline remain planned.
 
 This Markdown version uses Mermaid for diagram rendering on GitHub and in
 Mermaid-enabled Markdown viewers. The component table below remains readable
@@ -45,6 +46,8 @@ flowchart TB
         transport["IMPLEMENTED: bounded HTTPS GET — checked IP / verified TLS / manual redirects"]
         candidate["IMPLEMENTED: validate_pdf_candidate() — response labels / opening marker"]
         storage["IMPLEMENTED: save_pdf_candidate() / load_saved_candidate() — local verified snapshot"]
+        inspection["IMPLEMENTED: inspect_saved_pdf() — encrypted / page count from verified bytes"]
+        inspection --> storage
         storage --> candidate
         storage --> fingerprint
         acquisition -.-> storage
@@ -76,7 +79,7 @@ flowchart TB
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
     class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
-    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate,storage implemented;
+    class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate,storage,inspection implemented;
 ```
 
 **Legend:** Green nodes are implemented functions or checked-in data. Dashed nodes and arrows
@@ -98,6 +101,7 @@ it does not imply that a packaged application exists.
 | Checked-address HTTPS GET | DNS-answer validation, pinned numeric TCP, verified TLS, manual redirects, bounded body | Implemented; offline unit tests and local TLS test, no public fetch verified |
 | `validate_pdf_candidate()` | Check status, labels and opening marker without I/O | Implemented; offline-tested, not structural PDF validation |
 | `save_pdf_candidate()` / `load_saved_candidate()` | Store exact supplied bytes with receipt; verify on load | Implemented and offline-tested on Windows; not an acquisition worker |
+| `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | Acquisition worker | Source registry, fetching, and download validation | Planned |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -112,7 +116,7 @@ it does not imply that a packaged application exists.
 
 ## Implemented now
 
-Foundation components with no external dependencies:
+Foundation components plus one pinned PDF parser for inspection:
 
 - **Document fingerprints:** identify identical content, not authenticity.
 - **Source-definition validation:** check structure without verifying source
@@ -136,6 +140,9 @@ Foundation components with no external dependencies:
   metadata in a separate folder per retrieval, then verify both on load. The
   caller must supply the response; no source registry or transport integration
   happens automatically. See the [storage contract](document-storage.md).
+- **PDF structural inspection:** reads a verified saved candidate's bytes,
+  reports encryption and reader-reported page count, but does not inspect page
+  content or certify validity. See the [inspection contract](document-inspection.md).
 
 The registry loader reads a local file; the separate storage helper writes and
 verifies caller-supplied candidate bytes in a chosen local folder. The transport
@@ -145,13 +152,14 @@ increment. No component accesses a database or calls a model.
 
 ## Next small increment
 
-The source review, offline candidate checker, and separately approved local
-storage helper are complete within their stated boundaries. Scope and approve
-structural parsing and live acquisition before building an acquisition worker.
-Automated-access/reuse permission and current-date policy completeness remain
-unresolved. Neither transport nor candidate detection establishes that a policy
-governs a benefit. The transport also lacks a hard DNS-resolution or whole-request
-deadline. Keep these limits explicit in a future live test.
+The source review, offline candidate checker, local storage helper, and
+read-only structural inspector are complete within their stated boundaries.
+Separately scope parser resource isolation and text-layer inspection before
+unattended ingestion. Live acquisition needs its own approval and evidence of
+automated-access/reuse permission and current-date policy completeness. Neither
+transport nor page counting establishes that a policy governs a benefit. The
+transport also lacks a hard DNS-resolution or whole-request deadline. Keep
+these limits explicit in a future live test.
 
 ## Trust boundary
 
@@ -168,4 +176,5 @@ deadline. Keep these limits explicit in a future live test.
 - [HTTPS transport contract](https-transport.md)
 - [PDF-candidate contract](document-validation.md)
 - [Original-byte storage contract](document-storage.md)
+- [PDF inspection contract](document-inspection.md)
 - [Project README](../README.md)

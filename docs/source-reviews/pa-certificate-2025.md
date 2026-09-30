@@ -164,6 +164,10 @@ certificate was stored by the new helper. Structural parsing, automated
 collection, and redistribution remain separate decisions. The original review
 approval alone did **not** authorize validation code, storage code, crawling,
 or document redistribution; each implemented code increment had its own scope.
+A later [offline structural-inspection increment](../document-inspection.md)
+reports encryption and page count from verified saved bytes only. It does not
+establish text extraction, safe unattended processing, document applicability,
+or permission to collect the reviewed certificate.
 
 ## Historical verification of the source-review documentation increment
 

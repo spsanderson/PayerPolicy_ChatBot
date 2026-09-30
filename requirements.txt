@@ -1,0 +1,2 @@
+# Runtime dependency for offline PDF structural inspection (Python >=3.11).
+pypdf==6.19.0

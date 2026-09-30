@@ -124,4 +124,7 @@ The original 51 offline methods remain covered. The new checks do not establish
 that a real policy document can be safely parsed, indexed, or redistributed.
 At the time of this validator increment, storage remained a separate gate.
 A separately approved [offline storage helper](document-storage.md) now exists;
-structural parsing and live acquisition still need separate scope and approval.
+a later [offline inspection helper](document-inspection.md) reports encryption
+and reader-reported page count on verified saved bytes. This does not establish
+full PDF validity or safe parsing of arbitrary public files. Live acquisition,
+text extraction, and collection/reuse rights still need separate decisions.

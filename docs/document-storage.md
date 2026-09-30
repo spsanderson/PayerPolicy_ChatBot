@@ -138,3 +138,6 @@ of publication, disk-error injection, damaged receipts, and real controlled
 HTTP-parser output. No public policy file was fetched, stored, or redistributed
 by this increment. No structural PDF parser, source registry integration,
 installer, library UI, automatic cleanup, or new runtime dependency was added.
+A later [offline inspection helper](document-inspection.md) now reads verified
+saved bytes for encryption and page count; it does not expand the storage
+helper's own validation or authorize collection.

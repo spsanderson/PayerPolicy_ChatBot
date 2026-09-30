@@ -132,14 +132,40 @@ receipts, and offline composition with actual transport-parser output. No
 public policy was fetched or stored; no source, collection, redistribution,
 structural parsing, or applicability gate was approved by this module.
 
-Structural parsing and live application acquisition remain later approval
+Broader PDF parsing and live application acquisition remain later approval
 gates. This storage helper does not make a document library or connect the
 source registry to transport, and access/redistribution rights remain unresolved.
+
+### Module 7: Offline PDF structural inspection — implemented building block
+
+`inspect_saved_pdf(root, retrieval_id, *, max_bytes=10_000_000) ->
+PdfInspection` loads a verified saved candidate, then uses pinned pypdf to
+report whether it is encrypted and, if accessible, its reader-reported page
+count. The result includes the retrieval ID and verified byte fingerprint.
+An encrypted file returns `page_count=None`; an accessible empty PDF returns
+zero. Storage integrity/input failures remain distinct from PDF read failures
+(`PdfInspectionError`). See the [contract](document-inspection.md).
+
+This module reads the already verified bytes in memory; it does not change the
+original or its receipt, download another file, inspect page text, perform OCR,
+or claim whole-file validity. A 10,000,000-byte input cap is **not** a parser
+CPU/memory cap. Strict parsing may reject files other viewers repair. Do not
+connect arbitrary public PDFs to unattended ingestion without separately
+reviewed resource isolation and permission to collect.
+
+Verified on Python 3.11.16 with pypdf 6.19.0: 88 offline test methods ran
+(87 passed, one optional Windows link-creation case skipped), and the separate
+local-loopback TLS test passed. Eight new tests use synthetic PDFs and temporary
+storage; they cover multipage, encrypted, empty, marker-only, malformed,
+damaged-record, size/path, and no-network cases. The documentation example
+was not separately executed; its code path is exercised by the tests. No
+public source was collected or redistributed. The Windows installer remains
+planned.
 
 Registry URL validation alone is not a network security boundary. The new
 transport enforces destination/address/redirect checks and a raw byte limit,
 but a future ingestion pipeline must call the candidate checker and still
-address permissions, structural parsing and provenance before indexing content.
+address permissions, deeper PDF parsing and provenance before indexing content.
 A standalone validator does not make a working ingestion pipeline.
 
 Then validate real source access and preserve a representative document set.
