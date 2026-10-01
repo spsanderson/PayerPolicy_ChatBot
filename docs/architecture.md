@@ -154,8 +154,14 @@ increment. No component accesses a database or calls a model.
 
 The source review, offline candidate checker, local storage helper, and
 read-only structural inspector are complete within their stated boundaries.
-Separately scope parser resource isolation and text-layer inspection before
-unattended ingestion. Live acquisition needs its own approval and evidence of
+A [disposable Windows worker experiment](../spikes/001-windows-pdf-worker/README.md)
+has exercised resource limits and lifecycle cleanup on one host. Initial review
+required two response-contract corrections, now verified; independent re-review
+passed with no remaining blocker in this disposable scope. It is not wired
+into the production inspector, and Job
+Objects alone are not a security sandbox. Separately scope production worker
+promotion and text-layer inspection before unattended ingestion.
+Live acquisition needs its own approval and evidence of
 automated-access/reuse permission and current-date policy completeness. Neither
 transport nor page counting establishes that a policy governs a benefit. The
 transport also lacks a hard DNS-resolution or whole-request deadline. Keep
