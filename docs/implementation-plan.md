@@ -174,6 +174,37 @@ not a new pipeline component. The [inspection contract](document-inspection.md)
 distinguishes real malformed-PDF fixtures from dependency simulations and
 clarifies that pypdf internally tries an empty password during initialization.
 
+### Resource containment experiment — completed spike, production not promoted
+
+The separately approved [Windows worker spike](../spikes/001-windows-pdf-worker/README.md)
+uses native Job Objects through standard-library ctypes. The job is attached
+at process creation, not after an unrestricted start. Real probes exercise
+committed-memory caps, timeout termination, ordinary-child refusal, descendant
+cleanup, and last-job-handle closure after a disposable supervisor exits.
+Bounded JSON and unchanged production storage/inspection helpers complete the
+synthetic saved-document path. Setup/close fault cases are explicitly simulated.
+
+Nineteen experiment methods pass on 64-bit Python 3.11.16, pypdf 6.19.0, and
+Windows kernel/API 10.0.26200. The 96-method production suite still has 95 passes
+and one optional Windows link-test skip; local-loopback TLS passes. The hello
+CLI was independently executed. Initial review found no native/API or handle
+ownership blockers, but withheld approval for two response-validation defects:
+results must match the requested workload, and observations must not contradict
+their error codes or native process identities. A separate fix pass added
+workload-specific validation, consistent boolean/error-code observations, and
+launched-PID/native-member reconciliation before lifecycle evidence is copied.
+Independent 19-method verification, production tests, and TLS all pass.
+Independent re-review passed with no remaining logic/security blocker in the
+approved disposable scope; four focused response-contract tests also passed
+in that review. This does not approve production integration.
+
+Verdict is **PARTIAL**: demonstrated on one host under documented constraints,
+not a security sandbox, installer, production inspection API change, or general
+Windows compatibility claim. The existing inspector still runs in-process.
+Separately scope production worker promotion and budget selection before text
+extraction. Native API/file I/O deadlines, filesystem/network restrictions, and
+collection/reuse permission are not solved by this experiment.
+
 Registry URL validation alone is not a network security boundary.
 The transport enforces destination/address/redirect checks and a raw byte limit,
 but a future ingestion pipeline must call the candidate checker and still

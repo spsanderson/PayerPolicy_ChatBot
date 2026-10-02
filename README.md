@@ -50,6 +50,14 @@ optional Windows link-creation test skipped on the checked machine. A
 separate local-loopback TLS integration test passed. The inspection
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
 
+A separate [Windows worker experiment](spikes/001-windows-pdf-worker/README.md)
+exercises memory limits, deadlines, process-tree cleanup, and synthetic saved-PDF
+inspection. Nineteen tests pass on the checked host after response-contract
+corrections. It is disposable code, not production isolation; the inspector
+still runs in its caller. Independent re-review passed with no remaining
+blockers within the disposable experiment scope.
+No public-PDF ingestion is authorized.
+
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
 Full PDF validation, text extraction, and policy applicability checks remain
