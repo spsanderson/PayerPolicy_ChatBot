@@ -205,6 +205,34 @@ Separately scope production worker promotion and budget selection before text
 extraction. Native API/file I/O deadlines, filesystem/network restrictions, and
 collection/reuse permission are not solved by this experiment.
 
+### Contained inspection API — approved, implementation in progress
+
+A separate `inspect_saved_pdf_in_worker` entry point was approved after the
+experiment. It will return the existing `PdfInspection` value only after a
+bounded, request-specific response is checked and worker cleanup is confirmed.
+The original in-process inspector and storage contracts remain unchanged.
+
+Approved starting policy: one ordinary worker process; 256 MiB process and
+whole-job committed-memory limits; a 30-second worker wait; five-second cleanup
+confirmation; 65,536-byte request/result limits; and at most 10,000,000 original
+bytes. Memory and worker-wait settings may be lowered within validated bounds;
+the worker wait may be raised to 60 seconds. Unsupported startup or containment
+must fail without an unrestricted fallback. These are initial development
+limits, not a guarantee that every legitimate document can be inspected.
+
+Implementation targets the established Windows x64 source-checkout and virtual
+runtime layout, with explicit interpreter selection and isolated startup.
+The worker performs saved-byte verification and parsing; remote error categories
+remain distinct from local caller mistakes. No test workloads belong in the
+production worker. Real-process tests, regression verification, a separately
+executed synthetic example, and independent review remain acceptance gates.
+No implementation completion or production-worker test result is claimed yet.
+
+Text extraction, OCR, downloads, unattended ingestion, worker pools, an
+installer, and filesystem/network isolation remain excluded. The worker-wait
+limit does not bound every native call or filesystem operation. This increment
+does not establish collection permission or make arbitrary public PDFs safe.
+
 Registry URL validation alone is not a network security boundary.
 The transport enforces destination/address/redirect checks and a raw byte limit,
 but a future ingestion pipeline must call the candidate checker and still
