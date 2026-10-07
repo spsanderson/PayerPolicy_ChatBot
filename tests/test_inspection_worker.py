@@ -7,6 +7,35 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
+class WorkerExecutionTests(unittest.TestCase):
+    """Inspect real saved synthetic PDFs in the production worker."""
+
+    def test_saved_pdf_is_parsed_only_in_child(self) -> None:
+        """Match original facts and leave original/receipt bytes unchanged."""
+        from test_document_inspection import (
+            RETRIEVAL_ID, pdf_with_pages, save_fixture,
+        )
+        from payer_policy.document_inspection import inspect_saved_pdf
+        from payer_policy.inspection_worker import inspect_saved_pdf_in_worker
+
+        with TemporaryDirectory(prefix="worker unicode é ") as directory:
+            root = Path(directory)
+            save_fixture(root, pdf_with_pages(2))
+            original = root / "records" / RETRIEVAL_ID / "original.bin"
+            receipt = original.with_name("receipt.json")
+            before = original.read_bytes(), receipt.read_bytes()
+            expected = inspect_saved_pdf(root, RETRIEVAL_ID)
+            with (patch("payer_policy.document_inspection.PdfReader",
+                        side_effect=AssertionError("parent parsed PDF")),
+                  patch("payer_policy.document_inspection.load_saved_candidate",
+                        side_effect=AssertionError("parent read snapshot"))):
+                result = inspect_saved_pdf_in_worker(root, RETRIEVAL_ID)
+            self.assertEqual(result, expected)
+            self.assertEqual((original.read_bytes(), receipt.read_bytes()),
+                             before)
+
+
 class WorkerValidationTests(unittest.TestCase):
     """Reject caller mistakes before making files or native objects."""
 
@@ -37,7 +66,8 @@ class WorkerValidationTests(unittest.TestCase):
             for value in (True, 0, 16_777_215, 268_435_457, 16_777_216.0):
                 cases.append(({"limits": worker.InspectionLimits(
                     memory_bytes=value)}, ValueError))
-            with patch("tempfile.mkdtemp") as temporary:
+            with (patch("tempfile.mkdtemp") as temporary,
+                  patch("ctypes.WinDLL", create=True) as native):
                 for changes, error in cases:
                     with self.subTest(changes=changes):
                         arguments = {"root": root, "retrieval_id": "a" * 32}
@@ -45,7 +75,7 @@ class WorkerValidationTests(unittest.TestCase):
                         with self.assertRaises(error):
                             worker.inspect_saved_pdf_in_worker(**arguments)
                 temporary.assert_not_called()
-            self.assertNotIn("payer_policy._windows_job", sys.modules)
+                native.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -25,6 +25,44 @@ def result_message() -> dict[str, object]:
 class ProtocolTests(unittest.TestCase):
     """Only fixed, correctly bound inspection facts cross the boundary."""
 
+    def test_request_schema_and_atomic_publication(self) -> None:
+        """Only fixed inspect requests with bounded budgets are published."""
+        from payer_policy import _inspection_protocol as protocol
+
+        self.assertTrue(hasattr(protocol, "read_request"),
+                        "request validation is missing")
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            request = {
+                "schema_version": 1, "operation": "inspect",
+                "request_id": REQUEST_ID, "retrieval_id": RETRIEVAL_ID,
+                "root": str(root), "max_bytes": 10_000_000,
+                "runtime": {"base_prefix": str(root),
+                            "packages": str(root)},
+            }
+            target = root / "request.json"
+            protocol.publish(target, request)
+            self.assertEqual(protocol.read_request(target), request)
+            self.assertFalse(target.with_suffix(".tmp").exists())
+            cases = [("extra", 0), ("operation", "probe"),
+                     ("max_bytes", True), ("max_bytes", 10_000_001),
+                     ("max_bytes", 0), ("root", "relative"),
+                     ("root", 5), ("runtime", {}),
+                     ("runtime", {"packages": "relative",
+                                  "base_prefix": str(root)}),
+                     ("schema_version", True),
+                     ("request_id", "A" * 32)]
+            for key, value in cases:
+                with self.subTest(key=key, value=value):
+                    bad = dict(request)
+                    bad[key] = value
+                    target.write_text(json.dumps(bad), encoding="utf-8")
+                    with self.assertRaises(protocol.ProtocolError):
+                        protocol.read_request(target)
+            with self.assertRaises(protocol.ProtocolError):
+                protocol.publish(target, {"huge": "x" * 65_536})
+            self.assertFalse(target.with_suffix(".tmp").exists())
+
     def test_result_schema_is_exact_and_bounded(self) -> None:
         """Reject ambiguous JSON and results from another request."""
         try:
