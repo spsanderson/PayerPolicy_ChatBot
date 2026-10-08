@@ -36,24 +36,51 @@ def bootstrap(runtime: dict[str, Any]) -> None:
 
 
 def inspect_request(request: dict[str, Any]) -> dict[str, Any]:
-    """Return only fixed structural facts from the unchanged inspector."""
-    from payer_policy.document_inspection import inspect_saved_pdf
+    """Return facts or a defined inspector/storage/input failure code.
 
-    inspected = inspect_saved_pdf(Path(request["root"]),
-                                  request["retrieval_id"],
-                                  max_bytes=request["max_bytes"])
-    return {
+    Recheck the root with document_storage.py before reading any bytes.
+    _inspection_protocol.py already checks the identifier and byte limit.
+    Only that preflight may label plain errors as bad input. The unchanged
+    document_inspection.py owns loading and parsing; later unknown failures
+    escape, including a root race after preflight. Never guess from messages.
+    """
+    from payer_policy.document_inspection import (
+        PdfInspectionError, inspect_saved_pdf,
+    )
+    from payer_policy.document_storage import (
+        StorageIntegrityError, _check_root,
+    )
+
+    result: dict[str, Any] = {
         "schema_version": 1, "operation": "inspect",
         "request_id": request["request_id"],
         "retrieval_id": request["retrieval_id"], "status": "ok",
-        "facts": {"sha256": inspected.sha256,
-                  "is_encrypted": inspected.is_encrypted,
-                  "page_count": inspected.page_count},
+        "facts": None,
     }
+    try:
+        try:
+            root = Path(request["root"])
+            _check_root(root)
+        except (TypeError, ValueError, OSError):
+            result["status"] = "input_error"
+            return result
+        inspected = inspect_saved_pdf(root, request["retrieval_id"],
+                                      max_bytes=request["max_bytes"])
+    except PdfInspectionError:
+        result["status"] = "parser_error"
+    except StorageIntegrityError:
+        result["status"] = "storage_error"
+    except MemoryError:
+        result["status"] = "memory_error"
+    else:
+        result["facts"] = {"sha256": inspected.sha256,
+                           "is_encrypted": inspected.is_encrypted,
+                           "page_count": inspected.page_count}
+    return result
 
 
 def main() -> int:
-    """Read one request and atomically publish one result; bugs exit nonzero."""
+    """Read one request and publish a complete result; bugs exit nonzero."""
     if len(sys.argv) != 3:
         return 2
     request = protocol.read_request(Path(sys.argv[1]))

@@ -63,7 +63,8 @@ def _identity(message: dict[str, Any]) -> None:
         raise ProtocolError("invalid operation or version")
     for key in ("request_id", "retrieval_id"):
         value = message.get(key)
-        if type(value) is not str or re.fullmatch(r"[0-9a-f]{32}", value) is None:
+        if (type(value) is not str
+                or re.fullmatch(r"[0-9a-f]{32}", value) is None):
             raise ProtocolError("invalid identity")
 
 
@@ -77,9 +78,11 @@ def read_request(path: Path) -> dict[str, Any]:
     if type(maximum) is not int or not 0 < maximum <= 10_000_000:
         raise ProtocolError("invalid input budget")
     runtime = message["runtime"]
-    if type(runtime) is not dict or set(runtime) != {"base_prefix", "packages"}:
+    if (type(runtime) is not dict
+            or set(runtime) != {"base_prefix", "packages"}):
         raise ProtocolError("invalid runtime")
-    for value in (message["root"], runtime["base_prefix"], runtime["packages"]):
+    paths = (message["root"], runtime["base_prefix"], runtime["packages"])
+    for value in paths:
         if (type(value) is not str or "\x00" in value
                 or not Path(value).is_absolute() or value.startswith("\\\\")):
             raise ProtocolError("invalid local path")

@@ -45,7 +45,7 @@ administration of the NYSHIP Empire Plan Hospital Program.
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-The unittest suite ran 96 methods on Python 3.11.16: 95 passed and one
+The unittest suite ran 135 methods on Python 3.11.16: 134 passed and one
 optional Windows link-creation test skipped on the checked machine. A
 separate local-loopback TLS integration test passed. The inspection
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
@@ -54,9 +54,18 @@ A separate [Windows worker experiment](spikes/001-windows-pdf-worker/README.md)
 exercises memory limits, deadlines, process-tree cleanup, and synthetic saved-PDF
 inspection. Nineteen tests pass on the checked host after response-contract
 corrections. It is disposable code, not production isolation; the inspector
-still runs in its caller. Independent re-review passed with no remaining
-blockers within the disposable experiment scope.
+still runs in its caller. Independent re-review of the experiment passed
+with no remaining blockers within the disposable experiment scope.
 No public-PDF ingestion is authorized.
+
+The separate [contained inspection API](docs/inspection-worker.md) is implemented
+and verified on the documented Windows host; independent review passed after
+a narrow error-classification correction. It calls the existing inspector in
+a Windows worker, validates request-specific results, and confirms cleanup
+before success. Its 39 new test methods are included in the total above; the
+new synthetic documentation example was independently executed. The existing
+in-process API and parser pin remain unchanged. This is not a permissions
+sandbox, installer, or unattended-ingestion approval.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
@@ -138,6 +147,7 @@ payer_policy/https_transport.py  Checked-address HTTPS GET building block
 payer_policy/document_validation.py Offline PDF-candidate checks
 payer_policy/document_storage.py    Windows-local candidate snapshots
 payer_policy/document_inspection.py Offline PDF structural inspection
+payer_policy/inspection_worker.py   Contained Windows inspection API
 requirements.txt                   Pinned runtime PDF parser
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
@@ -150,7 +160,8 @@ docs/network-safety.md          Offline safety contract and executable example
 docs/https-transport.md          HTTPS transport contract and limitations
 docs/document-validation.md     Candidate-check contract and offline example
 docs/document-storage.md        Storage contract and offline example
-docs/document-inspection.md     Inspection contract and offline example
+docs/document-inspection.md     In-process inspection contract and example
+docs/inspection-worker.md       Worker contract, limits, and tested example
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and

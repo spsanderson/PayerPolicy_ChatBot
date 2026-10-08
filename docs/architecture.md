@@ -8,6 +8,8 @@ checks are implemented too. A bounded checked-address HTTPS GET building block
 now uses these checks; one reviewed reference entry is checked in. A standalone
 offline PDF-candidate checker, Windows-local original-byte snapshot helper,
 and a read-only inspector for encryption and page count are implemented too.
+A separate contained worker API is implemented and verified on the documented
+Windows host; independent review passed after an error-classification fix.
 Automatic acquisition, full PDF parsing/text extraction, a document library,
 and the rest of the pipeline remain planned.
 
@@ -47,6 +49,10 @@ flowchart TB
         candidate["IMPLEMENTED: validate_pdf_candidate() — response labels / opening marker"]
         storage["IMPLEMENTED: save_pdf_candidate() / load_saved_candidate() — local verified snapshot"]
         inspection["IMPLEMENTED: inspect_saved_pdf() — encrypted / page count from verified bytes"]
+        worker["IMPLEMENTED: inspect_saved_pdf_in_worker() — response and cleanup checks"]
+        child["IMPLEMENTED: fixed child — Windows job resource limits"]
+        worker -->|"bounded request/result; cleanup"| child
+        child --> inspection
         inspection --> storage
         storage --> candidate
         storage --> fingerprint
@@ -78,6 +84,7 @@ flowchart TB
 
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
+    class worker,child implemented;
     class sources,cloud,acquisition,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
     class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate,storage,inspection implemented;
 ```
@@ -102,6 +109,7 @@ it does not imply that a packaged application exists.
 | `validate_pdf_candidate()` | Check status, labels and opening marker without I/O | Implemented; offline-tested, not structural PDF validation |
 | `save_pdf_candidate()` / `load_saved_candidate()` | Store exact supplied bytes with receipt; verify on load | Implemented and offline-tested on Windows; not an acquisition worker |
 | `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
+| `inspect_saved_pdf_in_worker()` | Call the existing inspector in a limited Windows process; validate response and cleanup | Implemented and verified on the documented host; independent review passed, not a permissions sandbox |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | Acquisition worker | Source registry, fetching, and download validation | Planned |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -150,17 +158,20 @@ can perform an approved-host HTTPS GET when called, but the source registry
 does not call it or the storage helper. No public policy has been saved by this
 increment. No component accesses a database or calls a model.
 
-## Next small increment
+## Current approval and next boundary
 
 The source review, offline candidate checker, local storage helper, and
 read-only structural inspector are complete within their stated boundaries.
 A [disposable Windows worker experiment](../spikes/001-windows-pdf-worker/README.md)
 has exercised resource limits and lifecycle cleanup on one host. Initial review
 required two response-contract corrections, now verified; independent re-review
-passed with no remaining blocker in this disposable scope. It is not wired
-into the production inspector, and Job
-Objects alone are not a security sandbox. Separately scope production worker
-promotion and text-layer inspection before unattended ingestion.
+passed with no remaining blocker in this disposable scope. The separately
+approved [worker API](inspection-worker.md) now calls the unchanged inspector
+in a resource-limited process. Its new code and synthetic example pass local
+verification; independent review passed after an error-classification fix.
+The original API remains
+in-process, and Job Objects alone are not a permissions sandbox. Text-layer
+inspection and unattended ingestion remain outside this increment.
 Live acquisition needs its own approval and evidence of
 automated-access/reuse permission and current-date policy completeness. Neither
 transport nor page counting establishes that a policy governs a benefit. The
@@ -183,4 +194,5 @@ these limits explicit in a future live test.
 - [PDF-candidate contract](document-validation.md)
 - [Original-byte storage contract](document-storage.md)
 - [PDF inspection contract](document-inspection.md)
+- [Contained inspection contract and example](inspection-worker.md)
 - [Project README](../README.md)

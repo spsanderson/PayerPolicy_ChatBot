@@ -205,10 +205,10 @@ Separately scope production worker promotion and budget selection before text
 extraction. Native API/file I/O deadlines, filesystem/network restrictions, and
 collection/reuse permission are not solved by this experiment.
 
-### Contained inspection API — approved, implementation in progress
+### Contained inspection API — implemented and verified
 
 A separate `inspect_saved_pdf_in_worker` entry point was approved after the
-experiment. It will return the existing `PdfInspection` value only after a
+experiment. It returns the existing `PdfInspection` value only after a
 bounded, request-specific response is checked and worker cleanup is confirmed.
 The original in-process inspector and storage contracts remain unchanged.
 
@@ -224,9 +224,19 @@ Implementation targets the established Windows x64 source-checkout and virtual
 runtime layout, with explicit interpreter selection and isolated startup.
 The worker performs saved-byte verification and parsing; remote error categories
 remain distinct from local caller mistakes. No test workloads belong in the
-production worker. Real-process tests, regression verification, a separately
-executed synthetic example, and independent review remain acceptance gates.
-No implementation completion or production-worker test result is claimed yet.
+production worker. The [worker contract](inspection-worker.md) records its
+limits, failure categories, runtime assumptions, and independently executed
+synthetic example. Local verification ran 135 methods (134 passed, one existing
+optional Windows link skip), one TLS test, and the 19 historical spike methods.
+Real native tests cover resource refusal, cleanup, supervisor death, runtime
+isolation, and recovery; fault injections are labeled separately. Independent
+review found one child error-classification blocker: unexpected parser
+`ValueError` must remain a crash, not become `input_error`. A separate root
+preflight now isolates known input failures; later unknown exceptions escape.
+The correction and regression suite pass. Independent re-review passed with no
+remaining logic/security blocker in the approved scope and independently ran
+seven focused methods. This completes the bounded worker increment, not an
+installer or unattended-ingestion approval.
 
 Text extraction, OCR, downloads, unattended ingestion, worker pools, an
 installer, and filesystem/network isolation remain excluded. The worker-wait

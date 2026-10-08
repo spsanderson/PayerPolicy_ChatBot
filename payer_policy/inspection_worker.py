@@ -10,6 +10,8 @@ import secrets
 import struct
 import sys
 import sysconfig
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -17,7 +19,6 @@ from tempfile import TemporaryDirectory
 import pypdf
 
 from payer_policy import _inspection_protocol as protocol
-
 from payer_policy.document_inspection import PdfInspection
 from payer_policy.document_storage import _check_root
 
@@ -26,7 +27,13 @@ class WorkerInspectionError(RuntimeError):
     """Expose a stable failure category, not a remote exception object."""
 
     def __init__(self, code: str) -> None:
-        """Keep the public category as both message and code."""
+        """Store a known category; raise ValueError for unknown codes."""
+        allowed = protocol.CHILD_ERRORS | {
+            "unsupported_runtime", "setup_error", "timeout", "crash",
+            "invalid_result", "ipc_error", "cleanup_error",
+        }
+        if type(code) is not str or code not in allowed:
+            raise ValueError("unknown worker error code")
         self.code = code
         super().__init__(code)
 
@@ -65,10 +72,21 @@ def _validate_inputs(
         raise ValueError("invalid memory_bytes")
     if sys.platform != "win32":
         raise WorkerInspectionError("unsupported_runtime")
-    _check_root(root)
+    try:
+        _check_root(root)
+    except OSError as exc:
+        raise WorkerInspectionError("input_error") from exc
 
 
 def _runtime() -> tuple[Path, Path]:
+    """Return approved paths; classify inaccessible layouts as unsupported."""
+    try:
+        return _runtime_paths()
+    except (OSError, ValueError) as exc:
+        raise WorkerInspectionError("unsupported_runtime") from exc
+
+
+def _runtime_paths() -> tuple[Path, Path]:
     """Select only this standard CPython base and approved package folder.
 
     Windows venv executables can redirect to another process; launch the
@@ -97,12 +115,40 @@ def _runtime() -> tuple[Path, Path]:
             or not interpreter.is_file()
             or not (base / "Lib" / "encodings").is_dir()):
         raise WorkerInspectionError("unsupported_runtime")
-    try:
-        for directory in (base, packages, app):
-            _check_root(directory)
-    except (OSError, ValueError) as exc:
-        raise WorkerInspectionError("unsupported_runtime") from exc
+    for directory in (base, packages, app):
+        _check_root(directory)
     return interpreter, packages
+
+
+@contextmanager
+def _temporary_directory() -> Iterator[Path]:
+    """Yield private IPC storage; do not accept unconfirmed removal.
+
+    TemporaryDirectory.cleanup removes owned files before success:
+    https://docs.python.org/3.11/library/tempfile.html
+    """
+    try:
+        temporary = TemporaryDirectory(prefix="pdf-inspection-")
+    except OSError as exc:
+        raise WorkerInspectionError("setup_error") from exc
+    primary: BaseException | None = None
+    try:
+        yield Path(temporary.name)
+    except BaseException as exc:
+        primary = exc
+        raise
+    finally:
+        try:
+            temporary.cleanup()
+        except OSError as exc:
+            if primary is not None and (
+                    not isinstance(primary, Exception)
+                    or isinstance(primary, MemoryError)):
+                primary.add_note("temporary cleanup failed: " + repr(exc))
+            else:
+                failure = WorkerInspectionError("cleanup_error")
+                failure.add_note(repr(exc))
+                raise failure from (primary or exc)
 
 
 def inspect_saved_pdf_in_worker(
@@ -117,7 +163,7 @@ def inspect_saved_pdf_in_worker(
     selected = InspectionLimits() if limits is None else limits
     _validate_inputs(root, retrieval_id, max_bytes, selected)
     interpreter, packages = _runtime()
-    from payer_policy._windows_job import Job
+    from payer_policy._windows_job import CleanupError, Job
 
     request_id = secrets.token_hex(16)
     request = {
@@ -127,17 +173,38 @@ def inspect_saved_pdf_in_worker(
         "runtime": {"base_prefix": str(interpreter.parent),
                     "packages": str(packages)},
     }
-    with TemporaryDirectory(prefix="pdf-inspection-") as directory:
+    with _temporary_directory() as directory:
         request_path = Path(directory) / "request.json"
         output = Path(directory) / "result.json"
-        protocol.publish(request_path, request)
-        with Job(selected.memory_bytes) as job:
-            job.launch(interpreter, Path(__file__).with_name(
-                "_inspection_child.py").absolute(),
-                [str(request_path), str(output)])
-            if job.wait(selected.timeout_seconds) != 0:
-                raise WorkerInspectionError("crash")
-        result = protocol.read_result(output, request_id, retrieval_id)
+        try:
+            protocol.publish(request_path, request)
+        except (OSError, protocol.ProtocolError) as exc:
+            raise WorkerInspectionError("ipc_error") from exc
+        try:
+            with Job(selected.memory_bytes) as job:
+                job.launch(interpreter, Path(__file__).with_name(
+                    "_inspection_child.py").absolute(),
+                    [str(request_path), str(output)])
+                try:
+                    exit_code = job.wait(selected.timeout_seconds)
+                except TimeoutError as exc:
+                    raise WorkerInspectionError("timeout") from exc
+                except OSError as exc:
+                    raise WorkerInspectionError("ipc_error") from exc
+                if exit_code != 0:
+                    raise WorkerInspectionError("crash")
+        except CleanupError as exc:
+            raise WorkerInspectionError("cleanup_error") from exc
+        except OSError as exc:
+            raise WorkerInspectionError("setup_error") from exc
+        try:
+            result = protocol.read_result(output, request_id, retrieval_id)
+        except protocol.ProtocolError as exc:
+            raise WorkerInspectionError("invalid_result") from exc
+        except OSError as exc:
+            raise WorkerInspectionError("ipc_error") from exc
+        if result["status"] != "ok":
+            raise WorkerInspectionError(result["status"])
         facts = result["facts"]
         return PdfInspection(retrieval_id, facts["sha256"],
                              facts["page_count"], facts["is_encrypted"])

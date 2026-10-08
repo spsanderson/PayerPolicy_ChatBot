@@ -94,7 +94,7 @@ class NativeApi:
     """Bind Windows only when an operation actually needs the library."""
 
     def __init__(self) -> None:
-        """Load kernel32 and assign exact signatures; propagate setup errors."""
+        """Bind exact kernel32 signatures; propagate setup errors."""
         library = C.WinDLL("kernel32", use_last_error=True)
         signatures = {
             "CreateJob": ("CreateJobObjectW", [C.c_void_p, W.LPCWSTR],
@@ -254,12 +254,17 @@ class Job:
         for handle in handles:
             try:
                 check(self.api.Close(handle))
-            except OSError as exc:
+            except BaseException as exc:
                 errors.append(exc)
         if errors:
             failure = CleanupError("native handle close failed")
             for error in errors:
                 failure.add_note(str(error))
+            for error in errors:
+                if not isinstance(error, Exception) or isinstance(
+                        error, MemoryError):
+                    error.add_note(str(failure))
+                    raise error
             raise failure from errors[0]
 
     def __exit__(
@@ -273,11 +278,11 @@ class Job:
         """
         deadline = time.monotonic() + 5
         members: list[int] = []
-        failures: list[Exception] = []
+        failures: list[BaseException] = []
         if self.handle:
             try:
                 self._capture_members(members)
-            except Exception as exc:
+            except BaseException as exc:
                 failures.append(exc)
             try:
                 check(self.api.TerminateJob(self.handle, 124))
@@ -294,13 +299,13 @@ class Job:
                     if time.monotonic() >= deadline:
                         raise OSError("job shutdown not confirmed")
                     time.sleep(0.01)
-            except Exception as exc:
+            except BaseException as exc:
                 failures.append(exc)
         handles = members + [handle for handle in (
             self.process.thread, self.process.process, self.handle) if handle]
         try:
             self._close(handles)
-        except Exception as exc:
+        except BaseException as exc:
             failures.append(exc)
         self.closed = not failures
         self.handle = None
@@ -309,7 +314,13 @@ class Job:
             cleanup = CleanupError("native cleanup failed")
             for failure in failures:
                 cleanup.add_note(repr(failure))
-            if error is not None and not isinstance(error, Exception):
+            if error is not None and (not isinstance(error, Exception)
+                                      or isinstance(error, MemoryError)):
                 error.add_note(str(cleanup) + "; " + repr(failures))
                 return
+            for failure in failures:
+                if not isinstance(failure, Exception) or isinstance(
+                        failure, MemoryError):
+                    failure.add_note(str(cleanup))
+                    raise failure
             raise cleanup from (error or failures[0])

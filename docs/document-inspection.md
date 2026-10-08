@@ -34,6 +34,15 @@ images, attachments, or metadata are extracted. A scanned page cannot be
 classified by this increment; scanned text requires separately planned optical
 character recognition (OCR).
 
+## Separate contained entry point
+
+The [worker API](inspection-worker.md) calls this same inspector in a bounded
+Windows process and has a different, explicit remote-error contract. It is
+verified on the documented Windows host and independently reviewed.
+Calling `inspect_saved_pdf`
+directly still runs in-process with the limitations below; no automatic
+redirect or fallback changes this API.
+
 ## Failures and limits
 
 - Invalid IDs and limits keep the storage loader's `TypeError` / `ValueError`.

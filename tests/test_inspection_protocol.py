@@ -63,6 +63,58 @@ class ProtocolTests(unittest.TestCase):
                 protocol.publish(target, {"huge": "x" * 65_536})
             self.assertFalse(target.with_suffix(".tmp").exists())
 
+    def test_exact_read_budget_and_io_distinction(self) -> None:
+        """Read limit plus one, reject missing messages, preserve real IO."""
+        from io import BytesIO
+        from unittest.mock import patch
+        from payer_policy import _inspection_protocol as protocol
+
+        raw = b'{}' + b' ' * (protocol.MESSAGE_BYTES - 2)
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "message.json"
+            path.write_bytes(raw)
+            self.assertEqual(protocol.read_message(path), {})
+            path.write_bytes(raw + b" ")
+            with self.assertRaises(protocol.ProtocolError):
+                protocol.read_message(path)
+            path.unlink()
+            with self.assertRaises(protocol.ProtocolError):
+                protocol.read_message(path)
+            with patch.object(Path, "open", side_effect=PermissionError()):
+                with self.assertRaises(PermissionError):
+                    protocol.read_message(path)
+            stream = BytesIO(raw)
+            with (patch.object(Path, "open", return_value=stream),
+                  patch.object(stream, "read", wraps=stream.read) as read):
+                self.assertEqual(protocol.read_message(path), {})
+                read.assert_called_once_with(65_537)
+
+    def test_contradictory_errors_and_nested_json_are_rejected(self) -> None:
+        """No facts on errors, no encrypted count, duplicates or extra keys."""
+        from payer_policy import _inspection_protocol as protocol
+
+        invalid = []
+        for code in protocol.CHILD_ERRORS:
+            invalid.append(json.dumps(dict(result_message(), status=code)))
+        message = result_message()
+        message["facts"]["is_encrypted"] = True
+        invalid.append(json.dumps(message))
+        message = result_message()
+        message["facts"]["extra"] = None
+        invalid.append(json.dumps(message))
+        text = json.dumps(result_message())
+        invalid.extend((text.replace('"page_count": 0',
+                                     '"page_count": 0, "page_count": 1'),
+                        text + "{}", text.replace("0}", "Infinity}"),
+                        text.replace("0}", "-Infinity}")))
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            for raw in invalid:
+                with self.subTest(raw=raw):
+                    path.write_text(raw, encoding="utf-8")
+                    with self.assertRaises(protocol.ProtocolError):
+                        protocol.read_result(path, REQUEST_ID, RETRIEVAL_ID)
+
     def test_result_schema_is_exact_and_bounded(self) -> None:
         """Reject ambiguous JSON and results from another request."""
         try:
