@@ -205,6 +205,44 @@ Separately scope production worker promotion and budget selection before text
 extraction. Native API/file I/O deadlines, filesystem/network restrictions, and
 collection/reuse permission are not solved by this experiment.
 
+### Contained inspection API — implemented and verified
+
+A separate `inspect_saved_pdf_in_worker` entry point was approved after the
+experiment. It returns the existing `PdfInspection` value only after a
+bounded, request-specific response is checked and worker cleanup is confirmed.
+The original in-process inspector and storage contracts remain unchanged.
+
+Approved starting policy: one ordinary worker process; 256 MiB process and
+whole-job committed-memory limits; a 30-second worker wait; five-second cleanup
+confirmation; 65,536-byte request/result limits; and at most 10,000,000 original
+bytes. Memory and worker-wait settings may be lowered within validated bounds;
+the worker wait may be raised to 60 seconds. Unsupported startup or containment
+must fail without an unrestricted fallback. These are initial development
+limits, not a guarantee that every legitimate document can be inspected.
+
+Implementation targets the established Windows x64 source-checkout and virtual
+runtime layout, with explicit interpreter selection and isolated startup.
+The worker performs saved-byte verification and parsing; remote error categories
+remain distinct from local caller mistakes. No test workloads belong in the
+production worker. The [worker contract](inspection-worker.md) records its
+limits, failure categories, runtime assumptions, and independently executed
+synthetic example. Local verification ran 135 methods (134 passed, one existing
+optional Windows link skip), one TLS test, and the 19 historical spike methods.
+Real native tests cover resource refusal, cleanup, supervisor death, runtime
+isolation, and recovery; fault injections are labeled separately. Independent
+review found one child error-classification blocker: unexpected parser
+`ValueError` must remain a crash, not become `input_error`. A separate root
+preflight now isolates known input failures; later unknown exceptions escape.
+The correction and regression suite pass. Independent re-review passed with no
+remaining logic/security blocker in the approved scope and independently ran
+seven focused methods. This completes the bounded worker increment, not an
+installer or unattended-ingestion approval.
+
+Text extraction, OCR, downloads, unattended ingestion, worker pools, an
+installer, and filesystem/network isolation remain excluded. The worker-wait
+limit does not bound every native call or filesystem operation. This increment
+does not establish collection permission or make arbitrary public PDFs safe.
+
 Registry URL validation alone is not a network security boundary.
 The transport enforces destination/address/redirect checks and a raw byte limit,
 but a future ingestion pipeline must call the candidate checker and still
