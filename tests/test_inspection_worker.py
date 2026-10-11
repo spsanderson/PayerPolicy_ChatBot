@@ -226,6 +226,7 @@ class WorkerExecutionTests(unittest.TestCase):
                              before)
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class SupervisorFailureTests(unittest.TestCase):
     """Inject local failures at real supervisor boundaries."""
 
