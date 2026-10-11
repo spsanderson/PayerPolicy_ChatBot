@@ -479,6 +479,7 @@ class SupervisorFailureTests(unittest.TestCase):
                 launch.assert_called_once()
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class ChildBoundaryTests(unittest.TestCase):
     """Simulate defined failures, not real parser memory exhaustion."""
 
