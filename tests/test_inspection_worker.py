@@ -554,6 +554,7 @@ class ChildBoundaryTests(unittest.TestCase):
                     self.assertIs(caught.exception, failure)
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class WorkerValidationTests(unittest.TestCase):
     """Reject caller mistakes before making files or native objects."""
 
