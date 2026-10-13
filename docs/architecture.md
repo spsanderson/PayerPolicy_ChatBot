@@ -11,7 +11,7 @@ and a read-only inspector for encryption and page count are implemented too.
 A separate contained worker API is implemented and verified on the documented
 Windows host; independent review passed after an error-classification fix.
 A single-source acquisition coordinator connects transport, candidate checks,
-and storage after explicit approval; closeout review is in progress. Automated
+and storage after explicit approval; verification and code review passed. Automated
 collection, full PDF parsing/text extraction, a document library, and the rest
 of the pipeline remain planned.
 
@@ -114,7 +114,7 @@ it does not imply that a packaged application exists.
 | `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
 | `inspect_saved_pdf_in_worker()` | Call the existing inspector in a limited Windows process; validate response and cleanup | Implemented and verified on the documented host; independent review passed, not a permissions sandbox |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
-| `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented; offline-tested, closeout review in progress; no live-source approval |
+| `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; no live-source approval |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
 | Originals + provenance | Original documents, versions, source URLs, and applicability | Planned |
 | Extraction + review | PDF/HTML processing, OCR, and corrections | Planned |
@@ -180,8 +180,9 @@ verification; independent review passed after an error-classification fix.
 The original API remains
 in-process, and Job Objects alone are not a permissions sandbox. Text-layer
 inspection and unattended ingestion remain outside this increment.
-The single-source coordinator is implemented; its closeout review remains in
-progress. Live acquisition needs its own approval and evidence of
+The single-source coordinator is implemented and offline-verified; independent
+code review passed with no blockers. Live acquisition needs its own approval
+and evidence of
 automated-access/reuse permission and current-date policy completeness. Neither
 transport nor page counting establishes that a policy governs a benefit. The
 transport also lacks a hard DNS-resolution or whole-request deadline. Keep

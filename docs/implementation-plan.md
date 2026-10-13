@@ -243,7 +243,7 @@ installer, and filesystem/network isolation remain excluded. The worker-wait
 limit does not bound every native call or filesystem operation. This increment
 does not establish collection permission or make arbitrary public PDFs safe.
 
-### Single-document acquisition — implemented, closeout in progress
+### Single-document acquisition — implemented and verified
 
 The approved increment connects the existing checked HTTPS transport,
 PDF-candidate validator, and original-byte storage for one selected source.
@@ -275,10 +275,17 @@ was introduced. Registry URL validation alone is not a network security boundary
 collection rights, deeper PDF parsing, and applicability remain separate gates.
 
 The [acquisition contract and offline example](acquisition.md) describe the
-implemented API and its error boundaries. Closeout verification and independent
-review remain in progress; passing tests alone do not close this increment.
+implemented API and its error boundaries. Closeout on October 13, 2026:
+153 suite methods (152 passed, one existing optional Windows link skip), one
+passing local TLS test, an executed network-blocked offline example, and clean
+source-convention checks. All 54 local links in the four closeout documents
+resolved; Mermaid structure was checked, not visually rendered. Independent
+code review passed with no blockers and independently reran all 18 acquisition
+tests. A combined two-hop redirect acquisition test was suggested as optional;
+existing transport redirect tests and mocked final-URL receipt tests remain.
+This closes the single-document coordinator, not live-source approval.
 
-After closeout, separately approve and validate real source access and preserve
+Next, separately approve and validate real source access and preserve
 a representative document set.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings
 before selecting the final vector index or shipping large dependencies.

@@ -1,6 +1,7 @@
 # Single-document acquisition
 
-Status: implemented; closeout verification and independent review in progress.
+Status: implemented and verified on the documented Windows host; independent
+code review passed with no blocking findings.
 
 ## Purpose and boundary
 
@@ -162,7 +163,29 @@ with (patch("socket.getaddrinfo", side_effect=AssertionError("No DNS")),
 
 ## Verification
 
-Closeout results are pending. The focused suite is
+Closeout verification on October 13, 2026, using Windows x64, Python 3.11.16
+and the unchanged `pypdf==6.19.0` pin:
+
+- Full suite: 153 methods, 152 passed and one existing optional Windows
+  link-creation skip. Separate real loopback TLS test: passed.
+- Focused acquisition suite: 18 passed, also independently rerun by the reviewer.
+- The literal example above executed successfully with DNS/sockets blocked,
+  printing `Offline acquisition verified: 0123456789abcdef0123456789abcdef`.
+- Syntax, function docstrings/annotations, and the 79-character line limit
+  passed for both acquisition Python files. Added-line security-pattern checks
+  and `git diff --check` found no issues. These checks are not a security proof.
+- All 54 local Markdown links in the four closeout documents resolved. Mermaid
+  node/edge/class references passed structural checks; visual rendering was
+  not verified.
+- Independent code review found no blocking security or logic issue. An optional
+  combined two-hop redirect acquisition test remains a possible improvement:
+  redirect behavior has transport tests, while acquisition receipt preservation
+  of a redirected final URL currently uses a mocked fetcher.
+
+The earlier interrupted implementation log records incremental failing/passing
+focused runs and a passing pre-interruption regression run; it did not complete
+closeout. This closeout changes no production behavior and does not claim a
+new RED/GREEN implementation cycle. The focused suite is
 [tests/test_acquisition.py](../tests/test_acquisition.py). It covers invalid
 approval/configuration before fetch, frozen inputs, byte/receipt preservation,
 completion time, failure stages/causes, late publication failures and conflicts.

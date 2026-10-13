@@ -44,14 +44,16 @@ administration of the NYSHIP Empire Plan Hospital Program.
   candidate validation, and original-byte storage for one explicitly approved
   source. It checks approval and local paths before fetching; it does not parse
   PDFs or authorize public collection. See the [contract and offline example](docs/acquisition.md).
-  Closeout verification and independent review are in progress.
+  Closeout verification and independent code review passed; the literal
+  offline example was executed with public networking blocked.
 - `payer_policy.document_inspection.inspect_saved_pdf`: opens verified saved
   bytes offline with pypdf and reports encryption and, when accessible, a page
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-The pre-closeout unittest suite ran 151 methods on Python 3.11.16: 150 passed and one
-optional Windows link-creation test skipped on the checked machine. A
+On October 13, 2026, the unittest suite ran 153 methods on Python 3.11.16:
+152 passed and one optional Windows link-creation test skipped on the checked
+machine. A
 separate local-loopback TLS integration test passed. The inspection
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
 
