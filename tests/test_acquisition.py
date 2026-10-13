@@ -20,6 +20,7 @@ SOURCE_ID = "example-source"
 REQUESTED_URL = "https://EXAMPLE.org:443/a%2fb?q=2&b=1"
 
 
+@unittest.skipUnless(os.name == "nt", "Windows storage contract")
 class AcquisitionTests(unittest.TestCase):
     """Use real scratch files and block accidental public network access."""
 
