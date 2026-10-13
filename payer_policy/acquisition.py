@@ -68,7 +68,7 @@ class AcquisitionLimits:
 
 @dataclass(frozen=True)
 class AcquisitionResult:
-    """Return verified storage paths and identifiers without retaining bytes."""
+    """Return verified paths and identifiers without retaining bytes."""
 
     source_id: str
     retrieval_id: str
