@@ -113,7 +113,9 @@ class AcquisitionTests(unittest.TestCase):
                 self.acquire(limits=None)
             fetch.assert_not_called()
 
-    def test_selected_source_and_identifiers_validate_before_fetch(self) -> None:
+    def test_selected_source_and_identifiers_validate_before_fetch(
+        self,
+    ) -> None:
         """Reject unknown/malformed selected sources and unsafe IDs offline."""
         cases = [dict(source_id="missing"), dict(source_id=None),
                  dict(registry=None), dict(registry={SOURCE_ID: None}),
@@ -180,7 +182,7 @@ class AcquisitionTests(unittest.TestCase):
                                b"%PDF-")
 
         def fetch_then_mutate(*args: object, **kwargs: object) -> FetchResult:
-            """Simulate caller edits after preflight; return synthetic bytes."""
+            """Mutate caller inputs after preflight; return fixture bytes."""
             self.registry[SOURCE_ID]["url"] = "https://example.org/changed"
             object.__setattr__(limits, "max_bytes", 1)
             return response
@@ -238,7 +240,9 @@ class AcquisitionTests(unittest.TestCase):
                     self.acquire()
                 fetch.assert_not_called()
 
-    def test_existing_retrieval_never_fetches_even_identical_data(self) -> None:
+    def test_existing_retrieval_never_fetches_even_identical_data(
+        self,
+    ) -> None:
         """Acquisition refuses retries without changing storage idempotence."""
         from payer_policy.acquisition import AcquisitionError
         from payer_policy.document_storage import StorageConflictError
@@ -288,7 +292,9 @@ class AcquisitionTests(unittest.TestCase):
     def test_invalid_fetched_candidates_never_reach_storage(self) -> None:
         """Classify shallow validation, byte limits, and final URL failures."""
         from dataclasses import replace
-        from payer_policy.acquisition import AcquisitionError, AcquisitionLimits
+        from payer_policy.acquisition import (
+            AcquisitionError, AcquisitionLimits,
+        )
 
         valid = FetchResult(REQUESTED_URL, 200,
                             (("Content-Type", "application/pdf"),), b"%PDF-")
@@ -316,7 +322,8 @@ class AcquisitionTests(unittest.TestCase):
                 self.assertEqual(caught.exception.retrieval_id, RETRIEVAL_ID)
                 self.assertIsInstance(caught.exception.cause,
                                       (TypeError, ValueError))
-                self.assertIs(caught.exception.__cause__, caught.exception.cause)
+                self.assertIs(caught.exception.__cause__,
+                              caught.exception.cause)
                 save.assert_not_called()
         self.assertEqual(list(self.root.iterdir()), [self.note])
 
@@ -367,7 +374,9 @@ class AcquisitionTests(unittest.TestCase):
         save.assert_not_called()
         self.assertEqual(list(self.root.iterdir()), [self.note])
 
-    def test_preflight_io_failures_have_approval_or_storage_stage(self) -> None:
+    def test_preflight_io_failures_have_approval_or_storage_stage(
+        self,
+    ) -> None:
         """Permission errors inspecting local paths never start a fetch."""
         from payer_policy.acquisition import AcquisitionError
 
@@ -394,7 +403,7 @@ class AcquisitionTests(unittest.TestCase):
                 fetch.assert_not_called()
 
     def test_unexpected_bugs_and_interrupts_propagate_unchanged(self) -> None:
-        """Characterize narrow catches: never turn bugs into normal failures."""
+        """Keep unexpected bugs and interrupts outside normal failures."""
         from contextlib import ExitStack
 
         response = FetchResult(REQUESTED_URL, 200,
@@ -422,7 +431,7 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(list(self.root.iterdir()), [self.note])
 
     def test_published_failure_keeps_record_for_later_inspection(self) -> None:
-        """Characterize real publication: an error is not a rollback request."""
+        """Keep published bytes after a later verification failure."""
         from payer_policy.acquisition import AcquisitionError
         from payer_policy import document_storage as storage
 
@@ -452,7 +461,7 @@ class AcquisitionTests(unittest.TestCase):
                                b"%PDF-other writer")
 
         def racing_fetch(*args: object, **kwargs: object) -> FetchResult:
-            """Publish another writer's bytes after preflight, before return."""
+            """Publish competing bytes after preflight, before returning."""
             storage.save_pdf_candidate(
                 self.root, response, retrieval_id=RETRIEVAL_ID,
                 source_id=SOURCE_ID, requested_url=REQUESTED_URL,
@@ -469,6 +478,55 @@ class AcquisitionTests(unittest.TestCase):
                               storage.StorageConflictError)
         self.assertEqual(storage.load_saved_candidate(
             self.root, RETRIEVAL_ID).body, response.body)
+
+    def test_real_transport_parser_reaches_verified_storage(self) -> None:
+        """Characterize real HTTP parsing through validation and storage.
+
+        [controlled_reply](test_https_transport.py) replaces DNS/TCP/TLS
+        peers only; the production fetcher and writer remain unchanged.
+        """
+        from test_https_transport import controlled_reply
+        from payer_policy.document_storage import load_saved_candidate
+
+        body = b"%PDF-synthetic\x00\xff"
+        reply = (b"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\n"
+                 b"Content-Length: " + str(len(body)).encode("ascii")
+                 + b"\r\nETag: fixture\r\n\r\n" + body)
+        with controlled_reply(reply) as (dns, make_socket, raw, tls):
+            result = self.acquire()
+        dns.assert_called_once()
+        make_socket.assert_called_once()
+        raw.connect.assert_called_once_with(("8.8.8.8", 443))
+        tls.close.assert_called()
+        loaded = load_saved_candidate(self.root, RETRIEVAL_ID)
+        self.assertEqual(loaded.body, body)
+        self.assertEqual(loaded.receipt["requested_url"], REQUESTED_URL)
+        self.assertEqual(loaded.receipt["final_url"], REQUESTED_URL)
+        self.assertEqual(result.sha256, fingerprint_document(body))
+        self.assertEqual(result.receipt_path, loaded.receipt_path)
+
+    def test_real_transport_failure_never_publishes(self) -> None:
+        """Reject truncated HTTP and HTML before creating storage records."""
+        from test_https_transport import controlled_reply
+        from payer_policy.acquisition import AcquisitionError
+
+        cases = (
+            (b"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\n"
+             b"Content-Length: 100\r\n\r\n%PDF-", "fetch"),
+            (b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
+             b"Content-Length: 5\r\n\r\nlogin", "validation"),
+        )
+        for reply, stage in cases:
+            with self.subTest(stage=stage):
+                with controlled_reply(reply) as (_, _, _, tls):
+                    with self.assertRaises(AcquisitionError) as caught:
+                        self.acquire()
+                self.assertEqual(caught.exception.stage, stage)
+                self.assertEqual(caught.exception.retrieval_id, RETRIEVAL_ID)
+                self.assertIs(caught.exception.__cause__,
+                              caught.exception.cause)
+                tls.close.assert_called()
+                self.assertEqual(list(self.root.iterdir()), [self.note])
 
     def test_success_preserves_bytes_receipt_and_completion_time(self) -> None:
         """Return small metadata only after real storage verifies the bytes."""
