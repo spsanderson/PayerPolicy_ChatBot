@@ -243,9 +243,9 @@ installer, and filesystem/network isolation remain excluded. The worker-wait
 limit does not bound every native call or filesystem operation. This increment
 does not establish collection permission or make arbitrary public PDFs safe.
 
-### Single-document acquisition — approved, implementation in progress
+### Single-document acquisition — implemented, closeout in progress
 
-The approved next increment connects the existing checked HTTPS transport,
+The approved increment connects the existing checked HTTPS transport,
 PDF-candidate validator, and original-byte storage for one selected source.
 A separate acquisition approval must match the exact source ID and requested
 URL, name reviewed destination/redirect hosts, and reference a local review
@@ -271,10 +271,15 @@ be described as a complete rollback.
 Live public downloads require separate document-specific approval. Crawling,
 batching, scheduling, extraction, OCR, indexing, a database, and an installer
 remain excluded. No new dependency or existing registry/storage schema change
-is planned. Registry URL validation alone is not a network security boundary;
+was introduced. Registry URL validation alone is not a network security boundary;
 collection rights, deeper PDF parsing, and applicability remain separate gates.
 
-Then validate real source access and preserve a representative document set.
+The [acquisition contract and offline example](acquisition.md) describe the
+implemented API and its error boundaries. Closeout verification and independent
+review remain in progress; passing tests alone do not close this increment.
+
+After closeout, separately approve and validate real source access and preserve
+a representative document set.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings
 before selecting the final vector index or shipping large dependencies.
 
