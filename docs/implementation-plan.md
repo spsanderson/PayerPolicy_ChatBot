@@ -243,13 +243,50 @@ installer, and filesystem/network isolation remain excluded. The worker-wait
 limit does not bound every native call or filesystem operation. This increment
 does not establish collection permission or make arbitrary public PDFs safe.
 
-Registry URL validation alone is not a network security boundary.
-The transport enforces destination/address/redirect checks and a raw byte limit,
-but a future ingestion pipeline must call the candidate checker and still
-address permissions, deeper PDF parsing and provenance before indexing content.
-A standalone validator does not make a working ingestion pipeline.
+### Single-document acquisition — implemented and verified
 
-Then validate real source access and preserve a representative document set.
+The approved increment connects the existing checked HTTPS transport,
+PDF-candidate validator, and original-byte storage for one selected source.
+A separate acquisition approval must match the exact source ID and requested
+URL, name reviewed destination/redirect hosts, and reference a local review
+note. Registry presence or applicability status does not authorize collection.
+The current registry and source reviews do not grant live-download approval.
+
+Before fetching, validate configuration, the trusted local storage root, and
+an unused lowercase 32-hex retrieval ID. Starting budgets are at most
+10,000,000 bytes, a ten-second socket timeout, and three redirects; smaller
+budgets are allowed. The socket timeout is not a whole-operation deadline.
+One call returns stored-record metadata, not a second copy of the PDF body.
+Preserve requested/final URLs, a UTC fetch-completion time, original bytes,
+and the existing receipt. No retries, parsing, or rollback deletion are added.
+
+Acceptance requires sequential failing-then-passing tests, real validation and
+storage with controlled responses, real transport parsing with controlled
+sockets, unchanged regression/TLS tests, an executed offline example, and
+independent review. Known operational failures retain their stage, retrieval
+ID, and cause; unexpected bugs and interrupts must not become ordinary failure
+reports. A storage error after publication may leave a record and must not
+be described as a complete rollback.
+
+Live public downloads require separate document-specific approval. Crawling,
+batching, scheduling, extraction, OCR, indexing, a database, and an installer
+remain excluded. No new dependency or existing registry/storage schema change
+was introduced. Registry URL validation alone is not a network security boundary;
+collection rights, deeper PDF parsing, and applicability remain separate gates.
+
+The [acquisition contract and offline example](acquisition.md) describe the
+implemented API and its error boundaries. Closeout on October 13, 2026:
+153 suite methods (152 passed, one existing optional Windows link skip), one
+passing local TLS test, an executed network-blocked offline example, and clean
+source-convention checks. All 54 local links in the four closeout documents
+resolved; Mermaid structure was checked, not visually rendered. Independent
+code review passed with no blockers and independently reran all 18 acquisition
+tests. A combined two-hop redirect acquisition test was suggested as optional;
+existing transport redirect tests and mocked final-URL receipt tests remain.
+This closes the single-document coordinator, not live-source approval.
+
+Next, separately approve and validate real source access and preserve
+a representative document set.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings
 before selecting the final vector index or shipping large dependencies.
 

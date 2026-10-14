@@ -40,13 +40,20 @@ administration of the NYSHIP Empire Plan Hospital Program.
   retrieval receipt, and recheck them before loading. Same-ID conflicts cannot
   replace a prior record. See the [storage contract and offline example](docs/document-storage.md).
   This is not an automatic download or a complete document library.
+- `payer_policy.acquisition.acquire_pdf_candidate`: connects checked transport,
+  candidate validation, and original-byte storage for one explicitly approved
+  source. It checks approval and local paths before fetching; it does not parse
+  PDFs or authorize public collection. See the [contract and offline example](docs/acquisition.md).
+  Closeout verification and independent code review passed; the literal
+  offline example was executed with public networking blocked.
 - `payer_policy.document_inspection.inspect_saved_pdf`: opens verified saved
   bytes offline with pypdf and reports encryption and, when accessible, a page
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-The unittest suite ran 135 methods on Python 3.11.16: 134 passed and one
-optional Windows link-creation test skipped on the checked machine. A
+On October 13, 2026, the unittest suite ran 153 methods on Python 3.11.16:
+152 passed and one optional Windows link-creation test skipped on the checked
+machine. A
 separate local-loopback TLS integration test passed. The inspection
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
 
@@ -62,7 +69,7 @@ The separate [contained inspection API](docs/inspection-worker.md) is implemente
 and verified on the documented Windows host; independent review passed after
 a narrow error-classification correction. It calls the existing inspector in
 a Windows worker, validates request-specific results, and confirms cleanup
-before success. Its 39 new test methods are included in the total above; the
+before success. Its 39 test methods are included in the total above; the
 new synthetic documentation example was independently executed. The existing
 in-process API and parser pin remain unchanged. This is not a permissions
 sandbox, installer, or unattended-ingestion approval.
@@ -146,6 +153,7 @@ payer_policy/network_safety.py  Pure destination, address, and redirect checks
 payer_policy/https_transport.py  Checked-address HTTPS GET building block
 payer_policy/document_validation.py Offline PDF-candidate checks
 payer_policy/document_storage.py    Windows-local candidate snapshots
+payer_policy/acquisition.py        Explicitly approved single-source acquisition
 payer_policy/document_inspection.py Offline PDF structural inspection
 payer_policy/inspection_worker.py   Contained Windows inspection API
 requirements.txt                   Pinned runtime PDF parser
@@ -158,6 +166,7 @@ docs/implementation-plan.md     Living delivery plan
 docs/source-definition.md       Validator contract and example
 docs/network-safety.md          Offline safety contract and executable example
 docs/https-transport.md          HTTPS transport contract and limitations
+docs/acquisition.md              Acquisition contract and offline example
 docs/document-validation.md     Candidate-check contract and offline example
 docs/document-storage.md        Storage contract and offline example
 docs/document-inspection.md     In-process inspection contract and example
