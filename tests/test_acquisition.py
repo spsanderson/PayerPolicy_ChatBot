@@ -26,7 +26,7 @@ class AcquisitionTests(unittest.TestCase):
 
     def setUp(self) -> None:
         """Create an isolated root and review note; forbid live DNS/socket."""
-        temporary = TemporaryDirectory(dir=os.environ["TMPDIR"])
+        temporary = TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.note = self.root / "review.txt"
