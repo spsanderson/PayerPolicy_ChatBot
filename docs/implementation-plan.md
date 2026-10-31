@@ -285,7 +285,7 @@ tests. A combined two-hop redirect acquisition test was suggested as optional;
 existing transport redirect tests and mocked final-URL receipt tests remain.
 This closes the single-document coordinator, not live-source approval.
 
-### Acquisition plus contained inspection — approved, in progress
+### Acquisition plus contained inspection — implemented, review pending
 
 The approved offline increment adds `acquire_and_inspect_pdf` to connect the
 existing acquisition API to the contained inspection worker for one document.
@@ -300,7 +300,9 @@ real storage/worker composition, malformed/encrypted synthetic PDFs, regression
 and TLS tests, an executed offline example, and independent review. No new
 dependency, receipt schema, CLI, extraction, or public download is included.
 
-Implementation and verification are in progress. A live pilot remains a
+Local verification passed: 10 new tests; 163 total methods (162 passed, one
+existing skip); separate TLS test and literal offline example passed.
+Independent review and final documentation checks remain pending. A live pilot remains a
 separate checkpoint: recheck the historical certificate candidate and access
 conditions, then obtain approval for its exact URL and local storage scope.
 
