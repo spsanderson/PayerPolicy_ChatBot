@@ -116,7 +116,7 @@ it does not imply that a packaged application exists.
 | `save_pdf_candidate()` / `load_saved_candidate()` | Store exact supplied bytes with receipt; verify on load | Implemented and offline-tested on Windows; not an acquisition worker |
 | `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
 | `inspect_saved_pdf_in_worker()` | Call the existing inspector in a limited Windows process; validate response and cleanup | Implemented and verified on the documented host; independent review passed, not a permissions sandbox |
-| `acquire_and_inspect_pdf()` | Join acquisition and contained inspection with identity checks | Implemented and offline-tested; independent review pending; no live pilot |
+| `acquire_and_inspect_pdf()` | Join acquisition and contained inspection with identity checks | Implemented and offline-verified; independent review passed; no live pilot |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; no live-source approval |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -177,7 +177,7 @@ checks worker settings/runtime before fetching, uses one byte budget, and
 requires matching retrieval IDs and fingerprints. Known inspection failures
 retain saved acquisition metadata; there is no retry or rollback deletion.
 Synthetic real-parser/storage/worker tests and the offline example pass;
-independent review is pending. See the [contract](acquisition-inspection.md).
+independent review passed with no blockers. See the [contract](acquisition-inspection.md).
 The original acquisition function remains separate and does not parse PDFs.
 
 ## Current approval and next boundary
