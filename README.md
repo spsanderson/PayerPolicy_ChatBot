@@ -46,13 +46,18 @@ administration of the NYSHIP Empire Plan Hospital Program.
   PDFs or authorize public collection. See the [contract and offline example](docs/acquisition.md).
   Closeout verification and independent code review passed; the literal
   offline example was executed with public networking blocked.
+- `payer_policy.acquisition_inspection.acquire_and_inspect_pdf`: connects
+  approved acquisition to contained inspection, requiring matching retrieval
+  IDs and fingerprints. Failed inspection keeps the saved record. The offline
+  example, regression tests, and independent review passed. See the
+  [pipeline contract](docs/acquisition-inspection.md).
 - `payer_policy.document_inspection.inspect_saved_pdf`: opens verified saved
   bytes offline with pypdf and reports encryption and, when accessible, a page
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-On October 13, 2026, the unittest suite ran 153 methods on Python 3.11.16:
-152 passed and one optional Windows link-creation test skipped on the checked
+At closeout on November 1, 2026, the unittest suite ran 163 methods on Python 3.11.16:
+162 passed and one optional Windows link-creation test skipped on the checked
 machine. A
 separate local-loopback TLS integration test passed. The inspection
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
@@ -156,6 +161,7 @@ payer_policy/document_storage.py    Windows-local candidate snapshots
 payer_policy/acquisition.py        Explicitly approved single-source acquisition
 payer_policy/document_inspection.py Offline PDF structural inspection
 payer_policy/inspection_worker.py   Contained Windows inspection API
+payer_policy/acquisition_inspection.py Acquire then inspect a saved record
 requirements.txt                   Pinned runtime PDF parser
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
@@ -167,6 +173,7 @@ docs/source-definition.md       Validator contract and example
 docs/network-safety.md          Offline safety contract and executable example
 docs/https-transport.md          HTTPS transport contract and limitations
 docs/acquisition.md              Acquisition contract and offline example
+docs/acquisition-inspection.md   Connected pipeline contract and example
 docs/document-validation.md     Candidate-check contract and offline example
 docs/document-storage.md        Storage contract and offline example
 docs/document-inspection.md     In-process inspection contract and example

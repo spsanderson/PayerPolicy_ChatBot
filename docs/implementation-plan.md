@@ -285,6 +285,33 @@ tests. A combined two-hop redirect acquisition test was suggested as optional;
 existing transport redirect tests and mocked final-URL receipt tests remain.
 This closes the single-document coordinator, not live-source approval.
 
+### Acquisition plus contained inspection — implemented and verified
+
+The approved offline increment adds `acquire_and_inspect_pdf` to connect the
+existing acquisition API to the contained inspection worker for one document.
+Check inspection settings/runtime before fetching, preserve existing acquisition
+errors, and require matching retrieval IDs/fingerprints before success. Known
+post-acquisition inspection failures retain the saved acquisition metadata;
+never delete originals, retry automatically, or fall back to in-process parsing.
+
+The [contract and example](acquisition-inspection.md) record the approved scope.
+Acceptance includes sequential test-first behaviors, controlled HTTP through
+real storage/worker composition, malformed/encrypted synthetic PDFs, regression
+and TLS tests, an executed offline example, and independent review. No new
+dependency, receipt schema, CLI, extraction, or public download is included.
+
+Local verification passed: 10 new tests; 163 total methods (162 passed, one
+existing skip); separate TLS test and literal offline example passed.
+Closeout on November 1, 2026: independent review passed with no blockers and
+independently reran all 10 coordinator tests. Full regressions, local TLS and
+the literal example passed again on Python 3.11.16 with unchanged pypdf 6.19.0.
+Source conventions, 53 local links and Mermaid structure passed; rendering
+was not visually verified. Pending statuses were the only review suggestion
+and are now resolved. The approved offline increment is complete.
+A live pilot remains a
+separate checkpoint: recheck the historical certificate candidate and access
+conditions, then obtain approval for its exact URL and local storage scope.
+
 Next, separately approve and validate real source access and preserve
 a representative document set.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings

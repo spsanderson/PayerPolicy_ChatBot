@@ -58,6 +58,9 @@ flowchart TB
         inspection --> storage
         storage --> candidate
         storage --> fingerprint
+        pipeline["IMPLEMENTED: acquire_and_inspect_pdf() — matching saved/inspected identity"]
+        pipeline --> acquisition
+        pipeline --> worker
         acquisition --> storage
         storage -.-> originals
         acquisition --> candidate
@@ -87,7 +90,7 @@ flowchart TB
 
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
-    class worker,child,acquisition implemented;
+    class worker,child,acquisition,pipeline implemented;
     class sources,cloud,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
     class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate,storage,inspection implemented;
 ```
@@ -113,6 +116,7 @@ it does not imply that a packaged application exists.
 | `save_pdf_candidate()` / `load_saved_candidate()` | Store exact supplied bytes with receipt; verify on load | Implemented and offline-tested on Windows; not an acquisition worker |
 | `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
 | `inspect_saved_pdf_in_worker()` | Call the existing inspector in a limited Windows process; validate response and cleanup | Implemented and verified on the documented host; independent review passed, not a permissions sandbox |
+| `acquire_and_inspect_pdf()` | Join acquisition and contained inspection with identity checks | Implemented and offline-verified; independent review passed; no live pilot |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; no live-source approval |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -166,6 +170,16 @@ path for one source; registry presence alone never starts a download. No public
 policy has been saved by this increment. No component accesses a database or
 calls a model.
 
+## Connected acquisition and inspection
+
+`acquire_and_inspect_pdf` now joins acquisition to the contained worker. It
+checks worker settings/runtime before fetching, uses one byte budget, and
+requires matching retrieval IDs and fingerprints. Known inspection failures
+retain saved acquisition metadata; there is no retry or rollback deletion.
+Synthetic real-parser/storage/worker tests and the offline example pass;
+independent review passed with no blockers. See the [contract](acquisition-inspection.md).
+The original acquisition function remains separate and does not parse PDFs.
+
 ## Current approval and next boundary
 
 The source review, offline candidate checker, local storage helper, and
@@ -204,6 +218,7 @@ these limits explicit in a future live test.
 - [PDF-candidate contract](document-validation.md)
 - [Original-byte storage contract](document-storage.md)
 - [Single-document acquisition contract](acquisition.md)
+- [Acquire-and-inspect contract](acquisition-inspection.md)
 - [PDF inspection contract](document-inspection.md)
 - [Contained inspection contract and example](inspection-worker.md)
 - [Project README](../README.md)
