@@ -308,12 +308,21 @@ the literal example passed again on Python 3.11.16 with unchanged pypdf 6.19.0.
 Source conventions, 53 local links and Mermaid structure passed; rendering
 was not visually verified. Pending statuses were the only review suggestion
 and are now resolved. The approved offline increment is complete.
-A live pilot remains a
-separate checkpoint: recheck the historical certificate candidate and access
-conditions, then obtain approval for its exact URL and local storage scope.
+At offline closeout, the live pilot remained a separate approval checkpoint.
+That checkpoint was subsequently addressed for the three exact documents below.
 
-Next, separately approve and validate real source access and preserve
-a representative document set.
+### Representative PA pilot — executed and verified
+
+The separately approved [three-document pilot](source-reviews/representative-pa-pilot.md)
+completed November 5, 2026 using the unchanged coordinator and default limits.
+The certificate, amendments, and report were saved outside Git and inspected
+in the contained worker (165, 16, and 12 pages; all unencrypted). Separate disk
+readback matched all IDs, byte counts, and fingerprints; no retry was needed.
+The local registry and evidence reports remain outside the repository.
+
+This supplies a small real-document baseline, not complete policy coverage,
+rendering/extraction validation, or redistribution rights. Next, scope bounded
+page-by-page text extraction with page references before implementation.
 Separately test Windows packaging for extraction, OCR, and embedded embeddings
 before selecting the final vector index or shipping large dependencies.
 

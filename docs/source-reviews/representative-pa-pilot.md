@@ -2,10 +2,10 @@
 
 ## Decision and scope
 
-Research and target selection were approved. The three downloads below still
-require exact-document approval. This review did not fetch PDF bodies or run
-the application's acquisition coordinator. No registry or production-code
-changes were made, and no live application records were created.
+Research and target selection were approved first. At that stage, the three
+downloads below still required exact-document approval. The research did not
+fetch PDF bodies, run the coordinator, change the registry/production code, or
+create live application records. Subsequent approval is recorded below.
 
 Checked November 5, 2026, approximately 7:45-7:47 p.m. EST
 (November 6, approximately 00:45-00:47 UTC). The existing
@@ -86,10 +86,62 @@ to fetch PDF bodies as a substitute if the production transport refuses them.
 - No redistribution, Git upload of PDFs, public hosting, recurring download,
   crawling, extraction, OCR, or policy interpretation is approved.
 
-The next action is document-specific approval of these URLs and the local-only
-scope, including an explicit access/use decision. If that decision cannot be
-supported, keep acquisition paused and seek clarification instead. Approval
-of this research scope alone did not authorize PDF acquisition.
+At the research stage, document-specific approval was still required. The
+research scope alone did not authorize PDF acquisition.
+
+## Subsequent local-pilot approval
+
+On November 5, 2026, explicit approval was given for one local-only acquisition
+and contained-inspection attempt for each of the three exact URLs and source
+IDs above, in the listed order. Use the proposed storage root and sole allowed
+host above; stop for review after any failure. No automatic retry or alternate
+client is authorized. This records the requested local-use decision, not a
+publisher license or legal determination. Redistribution and current-benefit
+completeness remain unresolved. No PDF may be committed, uploaded, or included
+in a public application by this approval. Execution results follow below.
+
+## Verified local execution
+
+Executed November 5, 2026, 7:55-7:56 p.m. EST (November 6, 00:55-00:56 UTC).
+All three planned attempts succeeded in order through the unchanged
+`acquire_and_inspect_pdf` coordinator. Each returned HTTP 200 with requested
+and final URLs identical. All inspections reported unencrypted PDFs.
+
+- `pa-certificate-2025`: 165 reader-reported pages, 3,324,564 bytes.
+  Retrieval ID: `72ba039a0d6f4da78445bcbbe596a4ac`.
+  SHA-256: `6d5a418d110000e6a5305eb8545866664a63fae63b0a5df75090c55999824692`.
+- `pa-amendments-2025`: 16 reader-reported pages, 618,431 bytes.
+  Retrieval ID: `365ef565cbb644a0a65d17b1097409eb`.
+  SHA-256: `ae8a66ac89d9e64a26d4191fd383e0d00ca6cd7f5fa2b6c6b941134cdc1805f1`.
+- `pa-empire-plan-report-2026`: 12 reader-reported pages, 1,659,659 bytes.
+  Retrieval ID: `bf49adce2b59476da04e68c2ee16ca51`.
+  SHA-256: `5d5ee250ec777652f038ecf51dc6bf0d65f2f44dbd66aa825d609c77b7136cf1`.
+
+Separate disk readback verified all three originals against their receipt and
+inspection-report IDs, byte counts, and SHA-256 values. The local library has
+exactly three records; its staging directory is empty. The certificate hash
+matches the historical September review; no prior verified hash comparison
+was available here for the other two. Reader page counts are not rendering,
+text-quality, scan/OCR, or benefit-applicability verification.
+
+The approved root contains `approval.md`, `sources.json`, `manifest.json`,
+`summary.json`, per-attempt `reports/<retrieval_id>-started.json` and
+`reports/<retrieval_id>-result.json`, and unchanged storage records under
+`records/<retrieval_id>/original.bin` plus `receipt.json`. The `.bin` extension
+is the existing storage convention, not a transformed document. Originals,
+local registry, and inspection reports remain outside Git.
+
+The pinned CPython 3.11.16 environment with pypdf 6.19.0 was restored first.
+All 10 coordinator tests and the separate local TLS test passed before the
+live run. This pilot changed no application code, dependency, checked-in
+registry, or receipt schema. The full regression count elsewhere is historical,
+not a new full-suite run for this documentation-only pilot.
+
+No retries, alternate HTTP clients, text extraction, OCR, passwords, public
+uploads, or redistribution were used. The earlier blocked library inventory
+remains unresolved; these three documents are not proof of complete/current
+coverage. This closes the bounded three-document local pilot, not Phase 1 or
+a grant for future collection or redistribution.
 
 ## Sources
 

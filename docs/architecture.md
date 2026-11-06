@@ -59,6 +59,8 @@ flowchart TB
         storage --> candidate
         storage --> fingerprint
         pipeline["IMPLEMENTED: acquire_and_inspect_pdf() — matching saved/inspected identity"]
+        pilot["VERIFIED: three approved PA PDFs — local pilot only"]
+        pilot --> pipeline
         pipeline --> acquisition
         pipeline --> worker
         acquisition --> storage
@@ -90,7 +92,7 @@ flowchart TB
 
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
-    class worker,child,acquisition,pipeline implemented;
+    class worker,child,acquisition,pipeline,pilot implemented;
     class sources,cloud,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
     class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate,storage,inspection implemented;
 ```
@@ -111,14 +113,14 @@ it does not imply that a packaged application exists.
 | `validate_destination_url()` | Exact reviewed HTTPS host/port and raw URL checks | Implemented and offline-tested |
 | `validate_resolved_addresses()` | Reject a whole supplied answer set if any address is unsafe | Implemented and offline-tested; does not resolve DNS |
 | `validate_redirect()` | Recheck target, caller history, loops, and hop limit | Implemented and offline-tested; does not follow redirects |
-| Checked-address HTTPS GET | DNS-answer validation, pinned numeric TCP, verified TLS, manual redirects, bounded body | Implemented; offline unit tests and local TLS test, no public fetch verified |
+| Checked-address HTTPS GET | DNS-answer validation, pinned numeric TCP, verified TLS, manual redirects, bounded body | Implemented; offline unit tests and local TLS test, three approved PA documents fetched in a bounded local pilot |
 | `validate_pdf_candidate()` | Check status, labels and opening marker without I/O | Implemented; offline-tested, not structural PDF validation |
 | `save_pdf_candidate()` / `load_saved_candidate()` | Store exact supplied bytes with receipt; verify on load | Implemented and offline-tested on Windows; not an acquisition worker |
 | `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
 | `inspect_saved_pdf_in_worker()` | Call the existing inspector in a limited Windows process; validate response and cleanup | Implemented and verified on the documented host; independent review passed, not a permissions sandbox |
-| `acquire_and_inspect_pdf()` | Join acquisition and contained inspection with identity checks | Implemented and offline-verified; independent review passed; no live pilot |
+| `acquire_and_inspect_pdf()` | Join acquisition and contained inspection with identity checks | Implemented and offline-verified; independent review passed; three-document local pilot verified |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
-| `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; no live-source approval |
+| `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; only the specific PA pilot approved |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
 | Originals + provenance | Original documents, versions, source URLs, and applicability | Planned |
 | Extraction + review | PDF/HTML processing, OCR, and corrections | Planned |
@@ -145,7 +147,7 @@ Foundation components plus one pinned PDF parser for inspection:
   [contract and exclusions](network-safety.md).
 - **Checked-address HTTPS GET:** calls those helpers, resolves each request,
   pins the selected address, verifies hostname TLS identity, and bounds bytes
-  in memory. It has no reviewed live-source integration. See the
+  in memory. The separately approved PA pilot exercised real source access. See the
   [transport contract](https-transport.md).
 - **PDF-candidate checks:** reject unsuitable response labels or opening bytes,
   not malformed PDF structure. See the [contract](document-validation.md).
@@ -166,9 +168,10 @@ Foundation components plus one pinned PDF parser for inspection:
 The registry loader reads a local file without fetching anything. The caller
 may pass its mapping to the acquisition coordinator with a separate explicit
 approval. That coordinator connects the checked fetch and verified storage
-path for one source; registry presence alone never starts a download. No public
-policy has been saved by this increment. No component accesses a database or
-calls a model.
+path for one source; registry presence alone never starts a download. A later
+[approved PA pilot](source-reviews/representative-pa-pilot.md) saved three
+originals outside Git and verified their contained inspection results.
+No component accesses a database or calls a model.
 
 ## Connected acquisition and inspection
 
@@ -200,7 +203,7 @@ and evidence of
 automated-access/reuse permission and current-date policy completeness. Neither
 transport nor page counting establishes that a policy governs a benefit. The
 transport also lacks a hard DNS-resolution or whole-request deadline. Keep
-these limits explicit in a future live test.
+these limits explicit. The completed PA pilot does not remove them.
 
 ## Trust boundary
 

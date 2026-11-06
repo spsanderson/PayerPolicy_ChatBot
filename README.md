@@ -68,7 +68,11 @@ inspection. Nineteen tests pass on the checked host after response-contract
 corrections. It is disposable code, not production isolation; the inspector
 still runs in its caller. Independent re-review of the experiment passed
 with no remaining blockers within the disposable experiment scope.
-No public-PDF ingestion is authorized.
+That experiment did not authorize public-PDF ingestion. A separately approved
+[three-document PA pilot](docs/source-reviews/representative-pa-pilot.md)
+completed on November 5, 2026: three originals saved outside Git, receipts and
+fingerprints verified, and contained inspection returned 165, 16, and 12 pages.
+This is not recurring collection or redistribution approval.
 
 The separate [contained inspection API](docs/inspection-worker.md) is implemented
 and verified on the documented Windows host; independent review passed after
