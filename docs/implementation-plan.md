@@ -321,10 +321,40 @@ readback matched all IDs, byte counts, and fingerprints; no retry was needed.
 The local registry and evidence reports remain outside the repository.
 
 This supplies a small real-document baseline, not complete policy coverage,
-rendering/extraction validation, or redistribution rights. Next, scope bounded
-page-by-page text extraction with page references before implementation.
-Separately test Windows packaging for extraction, OCR, and embedded embeddings
-before selecting the final vector index or shipping large dependencies.
+rendering/extraction validation, or redistribution rights. The separately
+approved synthetic-only extraction increment below does not authorize text
+processing of these three policies. Separately test Windows packaging for
+extraction, OCR, and embedded embeddings before selecting the final vector
+index or shipping large dependencies.
+
+### Module 11: Bounded page text and derived storage — in progress
+
+The offline plan was approved November 7, 2026. Implement a separate
+`extract_saved_pdf_pages_in_worker(root, retrieval_id, *, pages, limits=None)`
+API and `save_text_extraction(root, extraction, *, extraction_id)` helper.
+The [extraction contract](text-extraction.md) records the approved boundaries;
+implementation, example execution, and independent review remain pending.
+
+- Read verified saved originals inside a Windows resource-limited worker.
+- Select 1–10 explicit, ascending physical PDF pages, numbered from one.
+- Use unchanged pypdf 6.19.0 plain extraction; preserve returned text exactly.
+- Bound input, per-page/combined UTF-8 text, serialized JSON, memory, and wait.
+- Return all requested pages or a failure; never silently truncate a batch.
+- Preserve the original fingerprint, page numbers, parser/version, timestamp,
+  and applied limits. Empty text is not proof that a page is scanned.
+- Publish separately under `derived/`, without replacing existing runs or
+  modifying originals. Validate the artifact and verify disk readback.
+- Keep the inspection API/protocol unchanged; no new dependencies or retries.
+
+Baseline verification: 163 methods ran (162 passed, one existing optional
+Windows link-creation skip), and the separate local TLS test passed. New
+behavior requires sequential RED/GREEN tests, actual worker execution,
+publication/failure checks, source-convention checks, documentation/example
+checks, regressions, and independent review before closeout.
+
+Approval covers synthetic fixtures only. Real-policy text processing and
+accuracy evaluation require another approval. No OCR, chunking, embeddings,
+search, chat, library-wide processing, downloads, or document uploads.
 
 ### Phase 1 acceptance gate
 
