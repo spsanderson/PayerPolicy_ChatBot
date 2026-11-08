@@ -19,7 +19,9 @@ from payer_policy.text_extraction import (
 
 def extract_request(request: dict) -> dict:
     """Extract a complete batch; unknown parser bugs escape to a crash."""
-    from payer_policy.document_storage import StorageIntegrityError, _check_root
+    from payer_policy.document_storage import (
+        StorageIntegrityError, _check_root,
+    )
 
     try:
         try:

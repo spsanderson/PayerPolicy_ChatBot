@@ -1,6 +1,7 @@
 """Offline extraction protocol and real Windows worker tests."""
 import copy
 import json
+import sys
 import unittest
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
@@ -10,15 +11,16 @@ from unittest.mock import patch
 
 from test_document_inspection import RETRIEVAL_ID, save_fixture
 from test_text_extraction import text_pdf
+from payer_policy.text_extraction import PdfTextExtraction
 
 
 REQUEST_ID = "a" * 32
 
 
-def sample_extraction():
+def sample_extraction() -> PdfTextExtraction:
     """Return a synthetic result, not text claimed from a real PDF."""
     from payer_policy.text_extraction import (
-        ExtractionLimits, PageText, PdfTextExtraction,
+        ExtractionLimits, PageText,
     )
 
     return PdfTextExtraction(
@@ -39,6 +41,7 @@ def sample_request(root: Path) -> dict:
     }
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class WorkerTests(unittest.TestCase):
     """Run the production isolated child with actual Windows job cleanup."""
 
@@ -64,14 +67,15 @@ class WorkerTests(unittest.TestCase):
             self.assertEqual(result.requested_pages, (1, 4))
             self.assertEqual(before, {p: p.read_bytes() for p in before})
 
-
     def test_native_document_errors_are_atomic_and_typed(self) -> None:
         """Refuse encryption, bad ranges, damaged originals and tiny output."""
         from test_document_inspection import pdf_with_pages
         from payer_policy.extraction_worker import (
             extract_saved_pdf_pages_in_worker as extract,
         )
-        from payer_policy.text_extraction import ExtractionError, ExtractionLimits
+        from payer_policy.text_extraction import (
+            ExtractionError, ExtractionLimits,
+        )
 
         for body, pages, limits, damage, code in (
             (pdf_with_pages(1, encrypted=True), (1,), None, False,
@@ -361,6 +365,7 @@ class ProtocolTests(unittest.TestCase):
             with self.assertRaises(protocol.ProtocolError):
                 protocol.read_result(path, request)
 
+    @unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
     def test_serialized_exact_and_over_budgets_include_escaping(self) -> None:
         """Characterize escaped Unicode plus metadata, not character counts."""
         from payer_policy import _extraction_protocol as protocol
@@ -384,17 +389,21 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(protocol.read_result(path, request), result)
             with self.assertRaises(protocol.ProtocolError):
                 protocol.encode(message, size - 1)
-            with patch.object(child, "_extract_saved_pages", return_value=result):
-                self.assertEqual(child.extract_request(request)["status"], "ok")
+            with patch.object(child, "_extract_saved_pages",
+                              return_value=result):
+                self.assertEqual(child.extract_request(request)["status"],
+                                 "ok")
             result = replace(result, limits=replace(
                 result.limits, max_result_bytes=size - 1))
             request["limits"] = asdict(result.limits)
-            with patch.object(child, "_extract_saved_pages", return_value=result):
+            with patch.object(child, "_extract_saved_pages",
+                              return_value=result):
                 failed = child.extract_request(request)
             self.assertEqual(failed["status"], "output_limit")
             self.assertIsNone(failed["facts"])
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class SupervisorTests(unittest.TestCase):
     """Characterize reused containment failures and early input validation."""
 
@@ -403,7 +412,8 @@ class SupervisorTests(unittest.TestCase):
         from payer_policy import extraction_worker as worker
         from payer_policy.text_extraction import ExtractionLimits
 
-        with TemporaryDirectory() as name, patch.object(worker, "_runtime") as run:
+        with (TemporaryDirectory() as name,
+              patch.object(worker, "_runtime") as run):
             for pages, limits in (([1], None), ((True,), None),
                                   ((1,), ExtractionLimits(max_bytes=True))):
                 with self.assertRaises((TypeError, ValueError)):
@@ -423,8 +433,8 @@ class SupervisorTests(unittest.TestCase):
             for boundary, error, code in (
                 ("_runtime", WorkerInspectionError("unsupported_runtime"),
                  "unsupported_runtime"),
-                ("_temporary_directory", WorkerInspectionError("cleanup_error"),
-                 "cleanup_error"),
+                ("_temporary_directory",
+                 WorkerInspectionError("cleanup_error"), "cleanup_error"),
             ):
                 with patch.object(worker, boundary, side_effect=error):
                     with self.assertRaises(ExtractionError) as caught:
@@ -451,7 +461,6 @@ class SupervisorTests(unittest.TestCase):
                         worker.extract_saved_pdf_pages_in_worker(
                             root, RETRIEVAL_ID, pages=(1,))
                     self.assertEqual(caught.exception.code, code)
-
 
     def test_request_strict_schema_and_json_bounds(self) -> None:
         """Reject duplicate keys, NaN, depth, coercion and unknown fields."""

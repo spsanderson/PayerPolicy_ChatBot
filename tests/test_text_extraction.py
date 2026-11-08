@@ -1,5 +1,7 @@
 """Synthetic-only tests for bounded plain text extraction."""
+import sys
 import unittest
+from dataclasses import FrozenInstanceError
 from datetime import timezone
 from io import BytesIO
 from pathlib import Path
@@ -57,10 +59,13 @@ def text_pdf() -> bytes:
     return output.getvalue()
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class KernelTests(unittest.TestCase):
     """Exercise real pinned pypdf using synthetic saved bytes only."""
 
-    def test_selected_physical_pages_keep_raw_text_and_provenance(self) -> None:
+    def test_selected_physical_pages_keep_raw_text_and_provenance(
+        self,
+    ) -> None:
         """Return a complete selected batch, including blank/image pages."""
         from test_document_inspection import RETRIEVAL_ID, save_fixture
         from payer_policy.text_extraction import (
@@ -88,6 +93,7 @@ class KernelTests(unittest.TestCase):
         self.assertEqual([p.status for p in result.pages],
                          ["text", "empty", "empty", "text"])
         self.assertEqual([p.page_number for p in result.pages], [1, 2, 3, 4])
+
     def test_batch_rejects_encryption_range_and_parser_failures(self) -> None:
         """Known PDF failures are typed; unknown library bugs escape."""
         from test_document_inspection import (
@@ -126,7 +132,6 @@ class KernelTests(unittest.TestCase):
                     _extract_saved_pages(root, RETRIEVAL_ID, (1, 2),
                                          ExtractionLimits())
                 self.assertEqual(caught.exception.code, "parser_error")
-
 
     def test_default_text_caps_accept_exact_and_reject_one_extra_byte(
         self,
@@ -201,14 +206,11 @@ class KernelTests(unittest.TestCase):
                             self.assertEqual(result.limits, limits)
 
 
-from dataclasses import FrozenInstanceError
-
-
 class InputTests(unittest.TestCase):
     """Require explicit page selections and immutable bounded settings."""
 
     def test_every_setting_has_exact_noncoercing_boundaries(self) -> None:
-        """All integer caps include their endpoints and reject nearby values."""
+        """Accept integer cap endpoints; reject nearby or untyped values."""
         from payer_policy.text_extraction import (
             ExtractionLimits, validate_limits, validate_pages,
         )

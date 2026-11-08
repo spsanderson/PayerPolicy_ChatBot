@@ -63,7 +63,8 @@ def _run(
     """Launch the fixed child; reject crashes, invalid replies or cleanup."""
     from payer_policy._windows_job import CleanupError, Job
 
-    request_path, output = directory / "request.json", directory / "result.json"
+    request_path = directory / "request.json"
+    output = directory / "result.json"
     try:
         protocol.publish(request_path, request, protocol.REQUEST_BYTES)
     except (OSError, protocol.ProtocolError) as exc:

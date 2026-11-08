@@ -202,8 +202,8 @@ def extraction_facts(value: PdfTextExtraction) -> dict:
 
 def limits_from_facts(value: dict) -> ExtractionLimits:
     """Decode an exact settings object; reject missing or extra fields."""
-    if (type(value) is not dict
-            or set(value) != {field.name for field in fields(ExtractionLimits)}):
+    keys = {field.name for field in fields(ExtractionLimits)}
+    if type(value) is not dict or set(value) != keys:
         raise ValueError("invalid limits keys")
     limits = ExtractionLimits(**value)
     validate_limits(limits)

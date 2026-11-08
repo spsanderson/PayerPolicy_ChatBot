@@ -1,5 +1,6 @@
 """Synthetic derived storage without touching source snapshots."""
 import json
+import sys
 import unittest
 from dataclasses import replace
 from pathlib import Path
@@ -10,6 +11,7 @@ from test_document_inspection import RETRIEVAL_ID, save_fixture
 from test_text_extraction import text_pdf
 
 
+@unittest.skipUnless(sys.platform == "win32", "Windows storage contract")
 class StorageTests(unittest.TestCase):
     """Publish a separate, verified derived artifact without overwriting."""
 
@@ -36,7 +38,8 @@ class StorageTests(unittest.TestCase):
             save_fixture(root, body)
             before = {p: p.read_bytes() for p in root.rglob("*")
                       if p.is_file()}
-            first = replace(sample_extraction(), sha256=sha256(body).hexdigest())
+            first = replace(sample_extraction(),
+                            sha256=sha256(body).hexdigest())
             second = replace(first, pages=(
                 replace(first.pages[0], text="other writer"), first.pages[1]))
             with patch.object(storage.os, "rename", together):
@@ -231,7 +234,7 @@ with patch.object(storage.os, "rename", interrupted):
     def test_artifact_budget_counts_escaped_metadata_before_writing(
         self,
     ) -> None:
-        """Accept the exact JSON byte cap; reject one byte less with no files."""
+        """Accept the exact JSON cap; reject one byte less before writing."""
         from hashlib import sha256
         from payer_policy import extraction_storage as storage
         from payer_policy import _extraction_protocol as protocol
@@ -299,6 +302,38 @@ with patch.object(storage.os, "rename", interrupted):
                     root, result, extraction_id="a" * 32)
             self.assertFalse((root / "derived").exists())
             self.assertEqual(before, {p: p.read_bytes() for p in before})
+
+    def test_invalid_artifacts_fail_before_any_storage_access(self) -> None:
+        """Reject unsafe IDs and inconsistent facts before opening files."""
+        from payer_policy import extraction_storage as storage
+        from test_extraction_worker import sample_extraction
+
+        result = sample_extraction()
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            with patch.object(storage, "_check_root") as check:
+                for identifier in ("../escape", "A" * 32, "a" * 31,
+                                   "a" * 33, True, None):
+                    with self.subTest(identifier=identifier):
+                        with self.assertRaises(ValueError):
+                            storage.save_text_extraction(
+                                root, result, extraction_id=identifier)
+                for invalid in (
+                    replace(result, retrieval_id="../escape"),
+                    replace(result, schema_version=True),
+                    replace(result, parser_version="other"),
+                    replace(result, extracted_at=result.extracted_at.replace(
+                        tzinfo=None)),
+                    replace(result, pages=result.pages[:1]),
+                    replace(result, limits=replace(
+                        result.limits, max_result_bytes=True)),
+                ):
+                    with self.subTest(invalid=invalid):
+                        with self.assertRaises(ValueError):
+                            storage.save_text_extraction(
+                                root, invalid, extraction_id="a" * 32)
+                check.assert_not_called()
+            self.assertEqual(list(root.iterdir()), [])
 
     def test_wrong_source_rejected_before_creating_derived_files(self) -> None:
         """A matching ID in the wrong root must not borrow another hash."""
