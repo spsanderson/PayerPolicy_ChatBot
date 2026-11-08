@@ -327,15 +327,18 @@ processing of these three policies. Separately test Windows packaging for
 extraction, OCR, and embedded embeddings before selecting the final vector
 index or shipping large dependencies.
 
-### Module 11: Bounded page text and derived storage — in progress
+### Module 11: Bounded page text and derived storage — verified
 
-The offline plan was approved November 7, 2026. Implement a separate
+The offline plan was approved November 7, 2026. Implemented a separate
 `extract_saved_pdf_pages_in_worker(root, retrieval_id, *, pages, limits=None)`
 API and `save_text_extraction(root, extraction, *, extraction_id)` helper.
 The [extraction contract](text-extraction.md) records the approved boundaries.
-Code is implemented; remaining failure tests, example execution, and
-independent review are pending. On resumption, the partial-work baseline
-ran 178 methods (177 passed, one existing skip). This is not final acceptance.
+Closeout passed November 8, 2026: 192 methods ran (191 passed, one existing
+skip), the separate local TLS test passed, and the literal synthetic example
+passed. All 29 extraction tests passed without skips and were independently
+rerun during review. No blocking security, logic, or contract findings remained.
+Source conventions, local links, and diagram structure passed; visual rendering
+was not verified. Real-policy accuracy remains untested.
 
 - Read verified saved originals inside a Windows resource-limited worker.
 - Select 1–10 explicit, ascending physical PDF pages, numbered from one.
@@ -349,10 +352,12 @@ ran 178 methods (177 passed, one existing skip). This is not final acceptance.
 - Keep the inspection API/protocol unchanged; no new dependencies or retries.
 
 Baseline verification: 163 methods ran (162 passed, one existing optional
-Windows link-creation skip), and the separate local TLS test passed. New
-behavior requires sequential RED/GREEN tests, actual worker execution,
-publication/failure checks, source-convention checks, documentation/example
-checks, regressions, and independent review before closeout.
+Windows link-creation skip), and the separate local TLS test passed. Subsequent
+verification includes native workers, controlled resource failures, competing
+publication, real process interruption, junction paths, and exact serialized
+limits. A received-byte limit bug was reproduced and corrected with RED/GREEN.
+The contract distinguishes real execution from injected faults and records
+two non-blocking review suggestions. The approved offline increment is complete.
 
 Approval covers synthetic fixtures only. Real-policy text processing and
 accuracy evaluation require another approval. No OCR, chunking, embeddings,

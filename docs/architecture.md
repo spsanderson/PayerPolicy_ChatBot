@@ -14,8 +14,8 @@ A single-source acquisition coordinator connects transport, candidate checks,
 and storage after explicit approval; verification and code review passed. Automated
 collection, broader extraction/review, a document library, and the rest of
 the pipeline remain planned. A separate selected-page plain-text worker and
-derived JSON saver are implemented; acceptance checks and independent review
-are pending. Only synthetic PDFs are in the extraction approval scope.
+derived JSON saver are implemented and verified; independent review passed
+with no blockers. Only synthetic PDFs are in the extraction approval scope.
 
 This Markdown version uses Mermaid for diagram rendering on GitHub and in
 Mermaid-enabled Markdown viewers. The component table below remains readable
@@ -24,8 +24,8 @@ retained as an offline snapshot; this Markdown document is the maintained view.
 
 ## System diagram
 
-Solid arrows show implemented calls. Dashed arrows show proposed
-pipeline connections.
+Solid arrows show implemented calls. Dashed arrows show proposed pipeline
+connections or explicitly caller-managed data flow, not automatic calls.
 
 ```mermaid
 flowchart TB
@@ -56,9 +56,9 @@ flowchart TB
         worker["IMPLEMENTED: inspect_saved_pdf_in_worker() — response and cleanup checks"]
         child["IMPLEMENTED: fixed child — Windows job resource limits"]
         worker -->|"bounded request/result; cleanup"| child
-        textworker["REVIEW PENDING: selected-page text worker"]
-        textchild["REVIEW PENDING: fixed extraction child / Windows job"]
-        textstore["REVIEW PENDING: separate derived JSON saver"]
+        textworker["IMPLEMENTED: selected-page text worker"]
+        textchild["IMPLEMENTED: fixed extraction child / Windows job"]
+        textstore["IMPLEMENTED: separate derived JSON saver"]
         textworker -->|"bounded extraction protocol; cleanup"| textchild
         textchild --> storage
         textworker -.->|"caller explicitly saves returned text"| textstore
@@ -101,16 +101,15 @@ flowchart TB
 
     classDef planned fill:#0f172a,stroke:#94a3b8,stroke-dasharray:6 4,color:#e2e8f0;
     classDef implemented fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#e2e8f0;
-    classDef reviewing fill:#451a03,stroke:#fbbf24,color:#fef3c7;
-    class textworker,textchild,textstore reviewing;
+    class textworker,textchild,textstore implemented;
     class worker,child,acquisition,pipeline,pilot implemented;
     class sources,cloud,ui,adapters,originals,extraction,retrieval,chunks,stores,support planned;
     class fingerprint,validator,registryfile,loader,parser,destination,addresses,redirects,transport,candidate,storage,inspection implemented;
 ```
 
 **Legend:** Green nodes are implemented functions or checked-in data. Dashed nodes and arrows
-represent planned components and data flow. Amber nodes have implementation
-code but are awaiting verified closeout. The Windows boundary is proposed;
+represent planned components and proposed/caller-managed data flow.
+The Windows boundary is proposed;
 it does not imply that a packaged application exists.
 
 ## Component status
@@ -131,8 +130,8 @@ it does not imply that a packaged application exists.
 | `inspect_saved_pdf()` | Read verified saved bytes for encryption and page count | Implemented and offline-tested; not full PDF validation or text extraction |
 | `inspect_saved_pdf_in_worker()` | Call the existing inspector in a limited Windows process; validate response and cleanup | Implemented and verified on the documented host; independent review passed, not a permissions sandbox |
 | `acquire_and_inspect_pdf()` | Join acquisition and contained inspection with identity checks | Implemented and offline-verified; independent review passed; three-document local pilot verified |
-| Selected-page extraction worker | Verify saved bytes, extract explicit physical pages, validate bounded response and cleanup | Implemented; acceptance checks and independent review pending, synthetic-only |
-| Derived text saver | Keep versioned text/page provenance separately without overwriting; verify readback | Implemented; acceptance checks and independent review pending |
+| Selected-page extraction worker | Verify saved bytes, extract explicit physical pages, validate bounded response and cleanup | Implemented and synthetic-only verified; independent review passed |
+| Derived text saver | Keep versioned text/page provenance separately without overwriting; verify readback | Implemented and verified; independent review passed |
 | Official policy sources | Anthem and NYSHIP publications | Integration planned |
 | `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; only the specific PA pilot approved |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
@@ -212,7 +211,7 @@ The original API remains
 in-process, and Job Objects alone are not a permissions sandbox. Text-layer
 inspection was outside that inspection increment. A separate synthetic-only
 [extraction increment](text-extraction.md) now adds selected-page text and
-derived storage; its acceptance verification is pending. Real-policy text
+derived storage; synthetic verification and independent review passed. Real-policy text
 processing and unattended ingestion remain outside the approved scope.
 The single-source coordinator is implemented and offline-verified; independent
 code review passed with no blockers. Live acquisition needs its own approval

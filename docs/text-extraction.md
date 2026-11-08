@@ -1,7 +1,7 @@
 # Bounded page text and derived storage
 
-Status: approved November 7, 2026; code implemented, acceptance verification
-and independent review pending. This is not yet a verified closeout.
+Status: approved November 7, 2026; implemented and verified November 8, 2026.
+Independent review passed with no blocking security, logic, or contract findings.
 
 ## Purpose and approval boundary
 
@@ -116,9 +116,9 @@ Python 3.11 development environment and pinned requirements. It creates only
 temporary synthetic originals and derived text; all are removed on exit.
 The DNS/connection guards apply to the calling process, not child permissions.
 The small PDF fixture uses pypdf generic objects; no extra PDF-writing package
-is required. The literal example was executed successfully on November 7,
-2026: both selected pages, saved JSON, and unchanged originals/receipt were
-checked. This is synthetic execution evidence, not real-policy accuracy.
+is required. The literal example passed on November 7 and again at closeout
+on November 8, 2026: both selected pages, saved JSON, and unchanged
+originals/receipt were checked. This is not real-policy accuracy evidence.
 
 ```python
 from datetime import datetime, timezone
@@ -199,15 +199,52 @@ with TemporaryDirectory(
     print("PASS: text + blank page, saved JSON, originals unchanged")
 ```
 
-## Verification gates — pending
+## Verified closeout — November 8, 2026
 
-- Sequential RED/GREEN tests with real synthetic PDF fixtures.
-- Known text, selected pages, blank/image-only/rotated/encrypted/malformed PDFs.
-- Exact and over-limit UTF-8/serialized boundaries; no silent normalization.
-- Worker failure/cleanup, strict response validation, and unchanged originals.
-- Derived-artifact round-trip, conflict, interruption, and readback failures.
-- Existing regressions, local TLS, source conventions, and independent review.
-- A literal executable offline example, local links, and diagram structure.
+Verified on Windows with CPython 3.11.16 and unchanged pypdf 6.19.0:
+
+- Full suite: 192 methods run, 191 passed, one existing optional original-file
+  symlink-privilege skip. The separate local-loopback TLS test passed.
+- All 29 extraction methods passed without skips. Independent read-only review
+  reran them and found no blocking security, logic, or contract defects.
+- The literal example above passed. Source checks covered eight new Python
+  files and 56 functions: syntax, docstrings, annotations, and 79-column lines.
+- Local documentation links and diagram references passed structural checks;
+  diagram rendering was not visually verified.
+- Review covered the complete increment from `345c82f` through
+  `cd00994159f1d7e6771c85bc5b2977f2e105e5e7`. Code/test hashes and the
+  reviewed diff were unchanged before documentation-only closeout.
+
+### What the tests establish
+
+Real synthetic PDFs exercise known text, blank/image-only/rotated pages,
+encryption, malformed files, selected-page ranges, and stored-byte limits.
+Native Windows jobs exercise success and controlled timeout, nonzero exit,
+parser-bug, and memory-failure children. The tests check closed jobs, no
+remaining active job processes, removed IPC directories, unchanged originals,
+and successful subsequent extraction. Controlled failures are not evidence
+of naturally occurring parser defects or a complete security sandbox.
+
+Storage tests exercise real competing publication, child-process interruption
+before and after publication, directory-junction rejection, source rehashing,
+no-overwrite behavior, and exact artifact readback. Readback and setup/cleanup
+fault classifications also use injected faults. The optional original-file
+symlink test remains skipped; directory-junction checks passed.
+
+One reproduced protocol bug was corrected through RED/GREEN: success reply
+limits now count received bytes, including trailing whitespace, rather than
+only re-encoded JSON. UTF-8 boundaries and whitespace preservation include
+injected parser strings. Serialized JSON tests include escaping and metadata.
+Input-byte execution uses a lowered configured cap; the 10,000,000-byte
+endpoint is validated as a setting, not a large real-document workload.
+
+### Non-blocking follow-ups and exclusions
+
+The reviewer suggested a real synthetic Unicode PDF and explicit cleanup
+failures after a successful result. These are additional coverage opportunities;
+inspection confirmed both cleanup boundaries precede the public return.
+No real-policy text, layout, Unicode decoding, applicability, or completeness
+was evaluated. Passing synthetic tests is not exhaustive correctness proof.
 
 No new dependency, OCR, chunking, embeddings, indexing, search, chat, automatic
 library processing, or changes to the existing inspection contract are included.

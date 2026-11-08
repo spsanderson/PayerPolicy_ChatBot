@@ -56,10 +56,11 @@ administration of the NYSHIP Empire Plan Hospital Program.
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-At closeout on November 1, 2026, the unittest suite ran 163 methods on Python 3.11.16:
-162 passed and one optional Windows link-creation test skipped on the checked
-machine. A
-separate local-loopback TLS integration test passed. The inspection
+At extraction closeout on November 8, 2026, the unittest suite ran 192 methods
+on Python 3.11.16: 191 passed and one optional Windows link-creation test
+skipped on the checked machine. All 29 extraction methods passed without
+skips and were independently rerun during review. The literal synthetic
+example and separate local-loopback TLS integration test passed. The parser
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
 
 A separate [Windows worker experiment](spikes/001-windows-pdf-worker/README.md)
@@ -86,8 +87,9 @@ sandbox, installer, or unattended-ingestion approval.
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
 Full PDF validation and policy applicability checks remain later requirements.
-Bounded selected-page extraction is implemented with acceptance checks and
-independent review still pending; see the [contract and synthetic example](docs/text-extraction.md).
+Bounded selected-page extraction and separate derived storage are implemented
+and verified; independent review passed with no blockers. See the
+[contract, evidence limits, and synthetic example](docs/text-extraction.md).
 It preserves returned text and saves separate derived JSON. Real-policy
 extraction has not been approved or exercised. Storage and inspection do not
 authorize collection.
