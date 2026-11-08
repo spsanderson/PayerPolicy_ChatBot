@@ -41,7 +41,10 @@ def save_text_extraction(
     if stored.receipt["sha256"] != extraction.sha256:
         raise StorageIntegrityError("extraction source does not match root")
     derived = root / "derived"
-    derived.mkdir(exist_ok=True)
+    try:
+        derived.mkdir(exist_ok=True)
+    except FileExistsError as exc:
+        raise ValueError("derived must be a directory") from exc
     _check_path(derived)
     if not derived.is_dir():
         raise ValueError("derived must be a directory")
