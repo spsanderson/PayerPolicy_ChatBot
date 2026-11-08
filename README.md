@@ -56,10 +56,11 @@ administration of the NYSHIP Empire Plan Hospital Program.
   count. It does not extract text or validate the whole PDF. See the
   [inspection contract](docs/document-inspection.md).
 
-At closeout on November 1, 2026, the unittest suite ran 163 methods on Python 3.11.16:
-162 passed and one optional Windows link-creation test skipped on the checked
-machine. A
-separate local-loopback TLS integration test passed. The inspection
+At extraction closeout on November 8, 2026, the unittest suite ran 192 methods
+on Python 3.11.16: 191 passed and one optional Windows link-creation test
+skipped on the checked machine. All 29 extraction methods passed without
+skips and were independently rerun during review. The literal synthetic
+example and separate local-loopback TLS integration test passed. The parser
 dependency is pinned in `requirements.txt`; the TLS test needs OpenSSL.
 
 A separate [Windows worker experiment](spikes/001-windows-pdf-worker/README.md)
@@ -68,7 +69,11 @@ inspection. Nineteen tests pass on the checked host after response-contract
 corrections. It is disposable code, not production isolation; the inspector
 still runs in its caller. Independent re-review of the experiment passed
 with no remaining blockers within the disposable experiment scope.
-No public-PDF ingestion is authorized.
+That experiment did not authorize public-PDF ingestion. A separately approved
+[three-document PA pilot](docs/source-reviews/representative-pa-pilot.md)
+completed on November 5, 2026: three originals saved outside Git, receipts and
+fingerprints verified, and contained inspection returned 165, 16, and 12 pages.
+This is not recurring collection or redistribution approval.
 
 The separate [contained inspection API](docs/inspection-worker.md) is implemented
 and verified on the documented Windows host; independent review passed after
@@ -81,8 +86,13 @@ sandbox, installer, or unattended-ingestion approval.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
-Full PDF validation, text extraction, and policy applicability checks remain
-later requirements. Storage and inspection do not authorize collection.
+Full PDF validation and policy applicability checks remain later requirements.
+Bounded selected-page extraction and separate derived storage are implemented
+and verified; independent review passed with no blockers. See the
+[contract, evidence limits, and synthetic example](docs/text-extraction.md).
+It preserves returned text and saves separate derived JSON. Real-policy
+extraction has not been approved or exercised. Storage and inspection do not
+authorize collection.
 
 ## Run the tests (development)
 
@@ -162,6 +172,9 @@ payer_policy/acquisition.py        Explicitly approved single-source acquisition
 payer_policy/document_inspection.py Offline PDF structural inspection
 payer_policy/inspection_worker.py   Contained Windows inspection API
 payer_policy/acquisition_inspection.py Acquire then inspect a saved record
+payer_policy/text_extraction.py     Page-text facts, limits and validation
+payer_policy/extraction_worker.py   Selected-page Windows extraction API
+payer_policy/extraction_storage.py  Separate no-overwrite text artifacts
 requirements.txt                   Pinned runtime PDF parser
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
@@ -178,6 +191,7 @@ docs/document-validation.md     Candidate-check contract and offline example
 docs/document-storage.md        Storage contract and offline example
 docs/document-inspection.md     In-process inspection contract and example
 docs/inspection-worker.md       Worker contract, limits, and tested example
+docs/text-extraction.md         Selected-page text and separate JSON storage
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and

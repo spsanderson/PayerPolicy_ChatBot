@@ -1,7 +1,9 @@
 # Acquire and inspect one document
 
 Status: implemented and verified; independent review passed with no blockers.
-No live pilot has been approved or executed.
+This implementation itself did not approve a live pilot. The subsequently
+approved [PA pilot](source-reviews/representative-pa-pilot.md) has now completed
+separately, with originals kept outside Git.
 
 ## Small connection, unchanged components
 

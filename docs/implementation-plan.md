@@ -308,14 +308,60 @@ the literal example passed again on Python 3.11.16 with unchanged pypdf 6.19.0.
 Source conventions, 53 local links and Mermaid structure passed; rendering
 was not visually verified. Pending statuses were the only review suggestion
 and are now resolved. The approved offline increment is complete.
-A live pilot remains a
-separate checkpoint: recheck the historical certificate candidate and access
-conditions, then obtain approval for its exact URL and local storage scope.
+At offline closeout, the live pilot remained a separate approval checkpoint.
+That checkpoint was subsequently addressed for the three exact documents below.
 
-Next, separately approve and validate real source access and preserve
-a representative document set.
-Separately test Windows packaging for extraction, OCR, and embedded embeddings
-before selecting the final vector index or shipping large dependencies.
+### Representative PA pilot — executed and verified
+
+The separately approved [three-document pilot](source-reviews/representative-pa-pilot.md)
+completed November 5, 2026 using the unchanged coordinator and default limits.
+The certificate, amendments, and report were saved outside Git and inspected
+in the contained worker (165, 16, and 12 pages; all unencrypted). Separate disk
+readback matched all IDs, byte counts, and fingerprints; no retry was needed.
+The local registry and evidence reports remain outside the repository.
+
+This supplies a small real-document baseline, not complete policy coverage,
+rendering/extraction validation, or redistribution rights. The separately
+approved synthetic-only extraction increment below does not authorize text
+processing of these three policies. Separately test Windows packaging for
+extraction, OCR, and embedded embeddings before selecting the final vector
+index or shipping large dependencies.
+
+### Module 11: Bounded page text and derived storage — verified
+
+The offline plan was approved November 7, 2026. Implemented a separate
+`extract_saved_pdf_pages_in_worker(root, retrieval_id, *, pages, limits=None)`
+API and `save_text_extraction(root, extraction, *, extraction_id)` helper.
+The [extraction contract](text-extraction.md) records the approved boundaries.
+Closeout passed November 8, 2026: 192 methods ran (191 passed, one existing
+skip), the separate local TLS test passed, and the literal synthetic example
+passed. All 29 extraction tests passed without skips and were independently
+rerun during review. No blocking security, logic, or contract findings remained.
+Source conventions, local links, and diagram structure passed; visual rendering
+was not verified. Real-policy accuracy remains untested.
+
+- Read verified saved originals inside a Windows resource-limited worker.
+- Select 1–10 explicit, ascending physical PDF pages, numbered from one.
+- Use unchanged pypdf 6.19.0 plain extraction; preserve returned text exactly.
+- Bound input, per-page/combined UTF-8 text, serialized JSON, memory, and wait.
+- Return all requested pages or a failure; never silently truncate a batch.
+- Preserve the original fingerprint, page numbers, parser/version, timestamp,
+  and applied limits. Empty text is not proof that a page is scanned.
+- Publish separately under `derived/`, without replacing existing runs or
+  modifying originals. Validate the artifact and verify disk readback.
+- Keep the inspection API/protocol unchanged; no new dependencies or retries.
+
+Baseline verification: 163 methods ran (162 passed, one existing optional
+Windows link-creation skip), and the separate local TLS test passed. Subsequent
+verification includes native workers, controlled resource failures, competing
+publication, real process interruption, junction paths, and exact serialized
+limits. A received-byte limit bug was reproduced and corrected with RED/GREEN.
+The contract distinguishes real execution from injected faults and records
+two non-blocking review suggestions. The approved offline increment is complete.
+
+Approval covers synthetic fixtures only. Real-policy text processing and
+accuracy evaluation require another approval. No OCR, chunking, embeddings,
+search, chat, library-wide processing, downloads, or document uploads.
 
 ### Phase 1 acceptance gate
 
