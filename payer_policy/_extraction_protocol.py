@@ -45,8 +45,8 @@ def decode(raw: bytes) -> dict:
     return message
 
 
-def read_message(path: Path, limit: int) -> dict:
-    """Read no more than limit plus one byte before decoding JSON."""
+def _read_bytes(path: Path, limit: int) -> bytes:
+    """Return bounded message bytes; reject missing or oversized files."""
     try:
         with path.open("rb") as stream:
             raw = stream.read(limit + 1)
@@ -54,7 +54,12 @@ def read_message(path: Path, limit: int) -> dict:
         raise ProtocolError("missing message") from exc
     if len(raw) > limit:
         raise ProtocolError("oversized message")
-    return decode(raw)
+    return raw
+
+
+def read_message(path: Path, limit: int) -> dict:
+    """Read no more than limit plus one byte before decoding JSON."""
+    return decode(_read_bytes(path, limit))
 
 
 def publish(path: Path, message: dict, limit: int) -> None:
@@ -116,7 +121,8 @@ def read_result(path: Path, request: dict) -> PdfTextExtraction:
     """Accept only matching complete facts; raise a typed child failure."""
     from payer_policy.text_extraction import CHILD_ERRORS
 
-    message = read_message(path, RESULT_BYTES)
+    raw = _read_bytes(path, RESULT_BYTES)
+    message = decode(raw)
     if set(message) != IDENTITY_KEYS | {"status", "facts"}:
         raise ProtocolError("invalid result keys")
     try:
@@ -141,6 +147,8 @@ def read_result(path: Path, request: dict) -> PdfTextExtraction:
             raise ExtractionError(status)
         if status != "ok":
             raise ValueError("invalid result status")
+        if len(raw) > request["limits"]["max_result_bytes"]:
+            raise ValueError("received result exceeds selected byte limit")
         result = extraction_from_facts(message["facts"])
         if (result.retrieval_id != request["retrieval_id"]
                 or list(result.requested_pages) != request["requested_pages"]

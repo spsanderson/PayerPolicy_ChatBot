@@ -85,8 +85,12 @@ sandbox, installer, or unattended-ingestion approval.
 
 A fingerprint identifies content, not authenticity or plan applicability.
 Empty bytes can be fingerprinted; the candidate validator now rejects them.
-Full PDF validation, text extraction, and policy applicability checks remain
-later requirements. Storage and inspection do not authorize collection.
+Full PDF validation and policy applicability checks remain later requirements.
+Bounded selected-page extraction is implemented with acceptance checks and
+independent review still pending; see the [contract and synthetic example](docs/text-extraction.md).
+It preserves returned text and saves separate derived JSON. Real-policy
+extraction has not been approved or exercised. Storage and inspection do not
+authorize collection.
 
 ## Run the tests (development)
 
@@ -166,6 +170,9 @@ payer_policy/acquisition.py        Explicitly approved single-source acquisition
 payer_policy/document_inspection.py Offline PDF structural inspection
 payer_policy/inspection_worker.py   Contained Windows inspection API
 payer_policy/acquisition_inspection.py Acquire then inspect a saved record
+payer_policy/text_extraction.py     Page-text facts, limits and validation
+payer_policy/extraction_worker.py   Selected-page Windows extraction API
+payer_policy/extraction_storage.py  Separate no-overwrite text artifacts
 requirements.txt                   Pinned runtime PDF parser
 sources/registry.json            Reviewed starting-source registry
 tests/                          Offline unit tests
@@ -182,6 +189,7 @@ docs/document-validation.md     Candidate-check contract and offline example
 docs/document-storage.md        Storage contract and offline example
 docs/document-inspection.md     In-process inspection contract and example
 docs/inspection-worker.md       Worker contract, limits, and tested example
+docs/text-extraction.md         Selected-page text and separate JSON storage
 ```
 
 `GETTING_STARTED.md`, `IMPLEMENTATION_GUIDE.md`, `SPARC_Documents/`, and

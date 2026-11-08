@@ -332,8 +332,10 @@ index or shipping large dependencies.
 The offline plan was approved November 7, 2026. Implement a separate
 `extract_saved_pdf_pages_in_worker(root, retrieval_id, *, pages, limits=None)`
 API and `save_text_extraction(root, extraction, *, extraction_id)` helper.
-The [extraction contract](text-extraction.md) records the approved boundaries;
-implementation, example execution, and independent review remain pending.
+The [extraction contract](text-extraction.md) records the approved boundaries.
+Code is implemented; remaining failure tests, example execution, and
+independent review are pending. On resumption, the partial-work baseline
+ran 178 methods (177 passed, one existing skip). This is not final acceptance.
 
 - Read verified saved originals inside a Windows resource-limited worker.
 - Select 1–10 explicit, ascending physical PDF pages, numbered from one.

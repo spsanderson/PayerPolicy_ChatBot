@@ -128,6 +128,46 @@ class KernelTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, "parser_error")
 
 
+    def test_default_text_caps_accept_exact_and_reject_one_extra_byte(
+        self,
+    ) -> None:
+        """Injected text reaches real page and batch byte checks unchanged."""
+        from test_document_inspection import (
+            RETRIEVAL_ID, pdf_with_pages, save_fixture,
+        )
+        from payer_policy.text_extraction import (
+            ExtractionError, ExtractionLimits, _extract_saved_pages,
+        )
+
+        limits = ExtractionLimits()
+        full_page = "é" * (limits.max_page_text_bytes // 2)
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            save_fixture(root, pdf_with_pages(10))
+            for texts, fails in (
+                ([full_page], False), ([full_page + "x"], True),
+                ([full_page] * 8 + ["", ""], False),
+                ([full_page] * 8 + ["x"], True),
+            ):
+                pages = tuple(range(1, len(texts) + 1))
+                with self.subTest(pages=len(pages), fails=fails):
+                    with patch("pypdf._page.PageObject.extract_text",
+                               side_effect=texts) as extract:
+                        if fails:
+                            with self.assertRaises(ExtractionError) as got:
+                                _extract_saved_pages(
+                                    root, RETRIEVAL_ID, pages, limits)
+                            self.assertEqual(got.exception.code,
+                                             "output_limit")
+                        else:
+                            result = _extract_saved_pages(
+                                root, RETRIEVAL_ID, pages, limits)
+                            self.assertEqual([p.text for p in result.pages],
+                                             texts)
+                            self.assertEqual(result.requested_pages, pages)
+                            self.assertEqual(result.page_count, 10)
+                        self.assertEqual(extract.call_count, len(texts))
+
     def test_utf8_page_and_batch_budgets_preserve_whitespace(self) -> None:
         """Injected Unicode measures bytes, not real-PDF glyph decoding."""
         from test_document_inspection import RETRIEVAL_ID, save_fixture
@@ -166,6 +206,41 @@ from dataclasses import FrozenInstanceError
 
 class InputTests(unittest.TestCase):
     """Require explicit page selections and immutable bounded settings."""
+
+    def test_every_setting_has_exact_noncoercing_boundaries(self) -> None:
+        """All integer caps include their endpoints and reject nearby values."""
+        from payer_policy.text_extraction import (
+            ExtractionLimits, validate_limits, validate_pages,
+        )
+
+        for key, minimum, maximum in (
+            ("max_bytes", 1, 10_000_000),
+            ("max_page_text_bytes", 1, 65_536),
+            ("max_total_text_bytes", 1, 524_288),
+            ("max_result_bytes", 1, 1_048_576),
+            ("memory_bytes", 16_777_216, 268_435_456),
+        ):
+            for value in (minimum, maximum):
+                with self.subTest(key=key, accepted=value):
+                    validate_limits(ExtractionLimits(**{key: value}))
+            for value in (minimum - 1, maximum + 1, True, False,
+                          float(minimum), str(minimum), None):
+                with self.subTest(key=key, rejected=value):
+                    with self.assertRaises(ValueError):
+                        validate_limits(ExtractionLimits(**{key: value}))
+        for value in (0.001, 60, 60.0):
+            validate_limits(ExtractionLimits(timeout_seconds=value))
+        for value in (0, -1, 60.001, True, False, None, "30",
+                      float("inf"), float("-inf"), float("nan")):
+            with self.subTest(timeout=value):
+                with self.assertRaises(ValueError):
+                    validate_limits(ExtractionLimits(timeout_seconds=value))
+        validate_pages((1,))
+        validate_pages(tuple(range(1, 11)))
+        with self.assertRaises(ValueError):
+            validate_pages(tuple(range(1, 12)))
+        with self.assertRaises(TypeError):
+            validate_limits({})
 
     def test_limits_and_pages_reject_coercion(self) -> None:
         """Reject invalid budgets and pages rather than repairing them."""
