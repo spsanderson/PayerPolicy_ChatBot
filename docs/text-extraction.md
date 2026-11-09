@@ -9,9 +9,10 @@ Read selected pages from a verified saved PDF, keeping enough information to
 find each page again. Save the returned text separately so the original stays
 unchanged. The implementation increment used synthetic PDFs only. A separately
 approved [local PA text-quality pilot](source-reviews/pa-text-quality-pilot.md)
-now covers a bounded real-document sample with local human review; preparation
-is verified, while page selection and extraction remain pending. No new
-download, document upload, or redistribution is included.
+now covers a bounded real-document sample with local human review. The approved
+automatic twelve-page sample was extracted, saved, and checked by disk readback;
+human visual review remains pending. No new download, document upload, or
+redistribution is included.
 
 ## Public operations
 
