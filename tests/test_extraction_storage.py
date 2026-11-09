@@ -15,6 +15,31 @@ from test_text_extraction import text_pdf
 class StorageTests(unittest.TestCase):
     """Publish a separate, verified derived artifact without overwriting."""
 
+    def test_regular_derived_file_is_rejected_without_changes(self) -> None:
+        """Reject a file blocking derived storage and preserve all evidence."""
+        from payer_policy.extraction_worker import (
+            extract_saved_pdf_pages_in_worker,
+        )
+        from payer_policy.extraction_storage import save_text_extraction
+
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            save_fixture(root, text_pdf())
+            result = extract_saved_pdf_pages_in_worker(
+                root, RETRIEVAL_ID, pages=(1,))
+            (root / "derived").write_bytes(b"keep this existing file")
+            paths_before = set(root.rglob("*"))
+            bytes_before = {p: p.read_bytes() for p in paths_before
+                            if p.is_file()}
+            with self.assertRaisesRegex(
+                ValueError, "^derived must be a directory$",
+            ) as caught:
+                save_text_extraction(root, result, extraction_id="c" * 32)
+            self.assertIsInstance(caught.exception.__cause__, FileExistsError)
+            self.assertEqual(set(root.rglob("*")), paths_before)
+            self.assertEqual({p: p.read_bytes() for p in bytes_before},
+                             bytes_before)
+
     def test_competing_writers_publish_one_intact_winner(self) -> None:
         """Two staged attempts race on one ID without replacing the winner."""
         from concurrent.futures import ThreadPoolExecutor
