@@ -88,3 +88,62 @@ Keep detailed text and review artifacts outside Git. Repository reporting uses
 metadata, page references, and issue categories without copying policy text.
 No OCR, indexing, embeddings, chat, production UI, or new dependencies are
 included. A nonempty extraction is not evidence of accuracy.
+
+## Spacing investigation and follow-up checks — November 14, 2026
+
+A reported word-spacing defect remains open. A synthetic-only reproduction
+using the restored Python 3.11.16 / pypdf 6.19.0 environment demonstrated that
+plain extraction can insert spaces for numeric text-position adjustments.
+Independent execution verified all 24 synthetic fixtures: nine deliberately
+triggered an inserted space and 15 remained unchanged. This mechanism also
+occurred with a non-target-letter control; it does not justify a blanket
+letter-space replacement. Synthetic evidence alone does not establish the
+cause in the real policy PDF. No production correction was applied.
+
+The local `synthetic-y-spacing-20261114T152910Z/` directory contains the
+standalone reproducer, synthetic PDFs, results, and verification notes.
+
+A metadata-only audit independently rechecked all twelve existing page-text
+copies against their saved extraction JSON and compared declared source
+fingerprints with receipt metadata. All twelve were nonempty; no replacement
+characters or unexpected control characters were counted. The audit found
+63 capital-Y/space/lowercase candidates, not 63 confirmed errors. Twenty
+inputs remained hash-identical. No PDF was parsed or rendered by this audit.
+The report is `saved-text-quality-audit-20261114T154643721758Z.json` in the
+local pilot directory.
+
+The twelve local human-review rows still read `not_reviewed`; a request for
+page-by-page verdicts received no answer. Automated byte agreement and
+character counts cannot establish semantic accuracy or visual fidelity.
+The sample exposes a specific extraction-quality concern and does not yet
+clear the quality gate for a chunking experiment.
+
+### Real-page causal diagnosis completed
+
+A separately authorized diagnostic inspected only amendments physical page
+1. The baseline extraction exactly matched the saved raw text. Both reported
+spaces were traced to pypdf's numeric text-position adjustment inference:
+zero-based output-space offsets 287 and 418, adjustment +126, effective space
+width 129, insertion threshold 122.55. The two mapped operations were
+unambiguous and involved no nested forms.
+
+A fresh in-memory diagnostic pass neutralized only those two adjustments.
+The result differed solely by removing the two reported spaces. Neither
+modified PDF bytes nor corrected page text was saved. This confirms the
+cause for these two examples and this pinned runtime, not every spacing
+candidate or the visual correctness of the entire sample.
+
+The diagnostic used the existing Windows Job helper with a 256 MiB cap,
+a 30-second wait and one active process; synthetic preflight passed before
+the real-page run. Both children exited successfully, and cleanup confirmed
+zero active processes and closed handles. This is resource/lifecycle
+containment, not a security sandbox. The diagnostic used PdfReader's default
+non-strict mode, unlike the production worker's strict mode; its baseline
+nevertheless matched the saved production extraction byte-for-byte.
+
+Metadata, script snapshots and preservation manifests are stored locally in
+`real-page-spacing-diagnostic-20261114T154705987304Z/`. Parent readback verified
+the recorded artifact/tool hashes and all 78 pre-existing library files'
+bytes, sizes and modification times. No production correction was applied.
+The remaining gate is the local human page-by-page review, after which a
+separately approved correction can retain raw evidence and explicit provenance.
