@@ -147,3 +147,29 @@ the recorded artifact/tool hashes and all 78 pre-existing library files'
 bytes, sizes and modification times. No production correction was applied.
 The remaining gate is the local human page-by-page review, after which a
 separately approved correction can retain raw evidence and explicit provenance.
+
+### Local AI visual comparison — November 17, 2026
+
+The user authorized a local-only visual comparison. A fresh synthetic
+calibration passed: the clean control returned `pass` for all seven categories,
+and the deliberately corrupted control returned `issue` for all seven. The
+review used Ollama at `127.0.0.1` with local model
+`qwen3-vl:4b-instruct`; cloud model entries were excluded. This is an AI
+comparison, not human sign-off.
+
+All twelve approved pages were rendered and compared against their saved text.
+The renderer's bounded child processes exited and cleaned up for every page;
+per-page image/text/source hashes and the 169 pre-existing library files were
+verified. Seven pages were classified `usable`; five were classified
+`usable_with_caveats`, all because of word-spacing findings. The flagged pages
+were certificate pages 1 and 165, amendments pages 1 and 6, and report page 1.
+No omissions, reading-order, negation, quantity, footnote, or table-relationship
+issues were returned, and no page was marked uncertain by this run.
+
+The detailed AI responses, rendered images, prompts, model metadata and
+verification artifacts remain outside Git in
+`local-visual-review-20261117T015958080740Z/`. The historical human checklist
+was not overwritten and remains pending; the AI result cannot certify
+visual accuracy, clinical correctness, licensing, current applicability, or
+document-wide coverage. Because the sample exposes spacing defects, the gate
+still does not approve a chunking experiment or a production correction.
