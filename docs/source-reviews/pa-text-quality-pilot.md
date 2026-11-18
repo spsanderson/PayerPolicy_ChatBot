@@ -188,3 +188,33 @@ This repository implementation did not open or alter external pilot files,
 apply a real-source manifest, or save corrected pilot text. Real source hashes
 and operation indexes must be supplied from the locally reviewed evidence.
 Existing visual-review limitations and the chunking gate remain in effect.
+
+### Flagged-page gate follow-up — November 18, 2026
+
+The four remaining AI-flagged pages were rechecked against the saved raw
+extraction and diagnosed locally with pypdf 6.19.0. The prior local-AI review
+classified all four as readable `usable_with_caveats` pages because of word
+spacing; this remains local-AI comparison, not human sign-off.
+
+- Certificate physical page 1: two TJ-inferred spaces were mapped at raw output
+  offsets 274 and 381, both adjustment `+126`, with operation indexes 59 and
+  1418. Isolated counterfactual extraction removed exactly those two spaces and
+  no other characters. A separate corrected derived artifact was created at
+  `corrected-derived-20261118Tcertificate-page-001`; raw extraction and PDF
+  bytes were not overwritten.
+- Certificate physical page 165: four TJ-inferred candidates were mapped, but
+  nested/external content was present, so the existing correction mechanism
+  rejected the counterfactual and no correction was created.
+- Amendments physical page 6: three TJ-inferred candidates were mapped, but
+  nested/external content was present; no correction was created.
+- Empire Plan report physical page 1: two TJ-inferred candidates were mapped,
+  but nested/external content was present; no correction was created.
+
+The detailed metadata-only report is outside Git at
+`flagged-page-gate-20261118.json` in the pilot root. The sample gate remains
+**not passed**: three pages retain unresolved spacing defects, and the bounded
+chunking/retrieval pilot is not approved. No document-wide correction, indexing,
+production retrieval, or full RAG rollout is authorized by this result. Any
+future correction for the three nested-content pages requires a separately
+reviewed fail-closed counterfactual mechanism; blanket replacement remains
+prohibited.
