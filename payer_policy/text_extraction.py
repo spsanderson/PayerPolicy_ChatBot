@@ -239,6 +239,7 @@ def extraction_from_facts(facts: dict) -> PdfTextExtraction:
     validate_extraction(result)
     return result
 
+
 @dataclass(frozen=True)
 class SpacingCorrection:
     """Identify one reviewed TJ item and its exact raw output span."""
