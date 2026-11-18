@@ -346,6 +346,21 @@ class SpacingViewTests(unittest.TestCase):
         self.assertEqual(view['corrections'][0]['adjustment'], 126)
         self.assertEqual(view['source_sha256'], raw.sha256)
 
+    def test_derived_view_accepts_mapped_non126_adjustment(self) -> None:
+        """Use the diagnosed TJ adjustment rather than a global threshold."""
+        from payer_policy.text_extraction import (
+            SpacingCorrection, corrected_text_view,
+        )
+
+        body, raw = self.fixture(b'[(Y)124(our)] TJ')
+        edit = SpacingCorrection(1, 1, 'Y our', 0, 3, 1, 124)
+        view = corrected_text_view(
+            body, raw, retrieval_id=raw.retrieval_id,
+            source_sha256=raw.sha256, corrections=(edit,),
+        )
+        self.assertEqual(view['pages'][0]['text'], 'Your')
+        self.assertEqual(view['corrections'][0]['adjustment'], 124)
+
     def test_indirect_contents_preserve_parser_string_decoding(self) -> None:
         """Reparse trial bytes like plain extraction, also across arrays."""
         from pypdf import PdfReader

@@ -181,8 +181,9 @@ The separately authorized narrow correction is implemented as the explicit
 Raw extraction and original storage remain unchanged. Each reviewed change
 requires source identity/hash, a unique raw span, TJ operation/item coordinates
 and an isolated parser counterfactual proving exactly one space deletion.
-The mechanism targets the confirmed +126 boundary; offsets 287 and 418 are
-covered by a synthetic regression, without copying policy text into Git.
+The mechanism initially targeted the confirmed +126 boundary; it now records
+and verifies each reviewed numeric TJ adjustment, without copying policy text
+into Git.
 
 This repository implementation did not open or alter external pilot files,
 apply a real-source manifest, or save corrected pilot text. Real source hashes
@@ -210,11 +211,30 @@ spacing; this remains local-AI comparison, not human sign-off.
 - Empire Plan report physical page 1: two TJ-inferred candidates were mapped,
   but nested/external content was present; no correction was created.
 
-The detailed metadata-only report is outside Git at
-`flagged-page-gate-20261118.json` in the pilot root. The sample gate remains
-**not passed**: three pages retain unresolved spacing defects, and the bounded
-chunking/retrieval pilot is not approved. No document-wide correction, indexing,
-production retrieval, or full RAG rollout is authorized by this result. Any
-future correction for the three nested-content pages requires a separately
-reviewed fail-closed counterfactual mechanism; blanket replacement remains
-prohibited.
+
+### Final text-quality gate closeout — November 18, 2026
+
+The correction mechanism was extended to require and record each diagnosed TJ
+adjustment rather than assuming `+126`, and to permit unrelated root-page `Do`
+form invocations when the reviewed target remains an unambiguous root-stream
+TJ item. Exact counterfactual extraction was then rerun for all four flagged
+pages:
+
+- Certificate physical page 1: 2 corrections.
+- Certificate physical page 165: 4 corrections.
+- Amendments physical page 6: 3 corrections.
+- Empire Plan report physical page 1: 2 corrections.
+
+All eleven isolated counterfactual corrections produced the required exact
+single-deletion result. A fresh local-AI comparison of the rendered pages
+against the corrected derived text classified all four pages `usable`; every
+applicable check passed, including word spacing. The comparison used the
+existing local Ollama model and is not human sign-off.
+
+The final report is outside Git at
+`flagged-page-gate-20261118-final.json`. The bounded text-quality gate is now
+**passed for this reviewed sample**. The bounded chunking/retrieval pilot is
+eligible as the next development phase, subject to its own validation of chunk
+boundaries, structure preservation, page provenance, citations, and retrieval
+quality. Document-wide production indexing and a full RAG rollout remain out
+of scope and unapproved.
