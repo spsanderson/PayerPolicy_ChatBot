@@ -181,10 +181,60 @@ The separately authorized narrow correction is implemented as the explicit
 Raw extraction and original storage remain unchanged. Each reviewed change
 requires source identity/hash, a unique raw span, TJ operation/item coordinates
 and an isolated parser counterfactual proving exactly one space deletion.
-The mechanism targets the confirmed +126 boundary; offsets 287 and 418 are
-covered by a synthetic regression, without copying policy text into Git.
+The mechanism initially targeted the confirmed +126 boundary; it now records
+and verifies each reviewed numeric TJ adjustment, without copying policy text
+into Git.
 
 This repository implementation did not open or alter external pilot files,
 apply a real-source manifest, or save corrected pilot text. Real source hashes
 and operation indexes must be supplied from the locally reviewed evidence.
 Existing visual-review limitations and the chunking gate remain in effect.
+
+### Flagged-page gate follow-up — November 18, 2026
+
+The four remaining AI-flagged pages were rechecked against the saved raw
+extraction and diagnosed locally with pypdf 6.19.0. The prior local-AI review
+classified all four as readable `usable_with_caveats` pages because of word
+spacing; this remains local-AI comparison, not human sign-off.
+
+- Certificate physical page 1: two TJ-inferred spaces were mapped at raw output
+  offsets 274 and 381, both adjustment `+126`, with operation indexes 59 and
+  1418. Isolated counterfactual extraction removed exactly those two spaces and
+  no other characters. A separate corrected derived artifact was created at
+  `corrected-derived-20261118Tcertificate-page-001`; raw extraction and PDF
+  bytes were not overwritten.
+- Certificate physical page 165: four TJ-inferred candidates were mapped, but
+  nested/external content was present, so the existing correction mechanism
+  rejected the counterfactual and no correction was created.
+- Amendments physical page 6: three TJ-inferred candidates were mapped, but
+  nested/external content was present; no correction was created.
+- Empire Plan report physical page 1: two TJ-inferred candidates were mapped,
+  but nested/external content was present; no correction was created.
+
+
+### Final text-quality gate closeout — November 18, 2026
+
+The correction mechanism was extended to require and record each diagnosed TJ
+adjustment rather than assuming `+126`, and to permit unrelated root-page `Do`
+form invocations when the reviewed target remains an unambiguous root-stream
+TJ item. Exact counterfactual extraction was then rerun for all four flagged
+pages:
+
+- Certificate physical page 1: 2 corrections.
+- Certificate physical page 165: 4 corrections.
+- Amendments physical page 6: 3 corrections.
+- Empire Plan report physical page 1: 2 corrections.
+
+All eleven isolated counterfactual corrections produced the required exact
+single-deletion result. A fresh local-AI comparison of the rendered pages
+against the corrected derived text classified all four pages `usable`; every
+applicable check passed, including word spacing. The comparison used the
+existing local Ollama model and is not human sign-off.
+
+The final report is outside Git at
+`flagged-page-gate-20261118-final.json`. The bounded text-quality gate is now
+**passed for this reviewed sample**. The bounded chunking/retrieval pilot is
+eligible as the next development phase, subject to its own validation of chunk
+boundaries, structure preservation, page provenance, citations, and retrieval
+quality. Document-wide production indexing and a full RAG rollout remain out
+of scope and unapproved.

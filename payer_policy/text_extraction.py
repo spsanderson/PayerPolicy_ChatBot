@@ -250,6 +250,7 @@ class SpacingCorrection:
     span_start: int
     operation_index: int
     item_index: int
+    adjustment: int = 126
 
 
 def corrected_text_view(
@@ -295,6 +296,8 @@ def corrected_text_view(
                      'operation_index', 'item_index'):
             if type(getattr(edit, name)) is not int:
                 raise ValueError('integer coordinates required')
+        if type(edit.adjustment) is not int:
+            raise ValueError('integer adjustment required')
         text = pages.get(edit.page_number)
         start = edit.span_start
         offset = edit.space_offset
@@ -316,8 +319,6 @@ def corrected_text_view(
         if page.extract_text(extraction_mode='plain') != text:
             raise ValueError('raw parser text mismatch')
         stream = ContentStream(page.get_contents(), reader)
-        if any(operator == b'Do' for _, operator in stream.operations):
-            raise ValueError('nested or external content is unsupported')
         op = edit.operation_index
         item = edit.item_index
         if not 0 <= op < len(stream.operations):
@@ -334,8 +335,9 @@ def corrected_text_view(
                 or not left.endswith('Y') or not right
                 or not 'a' <= right[0] <= 'z'
                 or not isinstance(adjustment, (int, float))
-                or isinstance(adjustment, bool) or adjustment != 126):
-            raise ValueError('not the approved TJ boundary')
+                or isinstance(adjustment, bool)
+                or adjustment != edit.adjustment):
+            raise ValueError('TJ evidence does not match')
         # Neutralize one item, never rewrite or serialize a PDF.
         trial = deepcopy(stream)
         trial.operations[op][0][0][item] = NumberObject(0)
@@ -352,7 +354,7 @@ def corrected_text_view(
         if trial_page.extract_text(extraction_mode='plain') != expected:
             raise ValueError('ambiguous TJ to output mapping')
         evidence.append({
-            **asdict(edit), 'adjustment': 126, 'replacement': '',
+            **asdict(edit), 'replacement': '',
             'raw_page_sha256': sha256(text.encode('utf-8')).hexdigest(),
             'proof': 'isolated-TJ-neutralization-exact-single-deletion',
         })

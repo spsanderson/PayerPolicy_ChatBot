@@ -287,13 +287,15 @@ not hardcoded in the implementation.
 
 For each record the implementation rechecks source bytes, pinned parser,
 raw page text and context; rejects overlapping or repeated spans and external
-content (`Do`); requires a literal Y ending the left TJ string, a lowercase
-letter starting the right string, and exactly +126 between them. A separate
-in-memory content stream neutralizes only that numeric item. Its bytes are
-placed in a fresh decoded stream on a shallow page copy, retaining the source
-resources. Indirect streams and arrays of streams are resolved and concatenated
-in their original order for this trial only. Extraction must
-then equal the original text with exactly the nominated space deleted.
+content targets that cannot be mapped unambiguously; requires a literal Y ending
+the left TJ string, a lowercase letter starting the right string, and requires
+the recorded numeric adjustment to match the actual TJ item. A separate
+in-memory content stream neutralizes only that numeric item. Indirect streams
+and array-based contents are resolved and concatenated in their original order
+for this trial only. A page may contain unrelated `Do` form invocations when
+the reviewed target is in the root content stream; exact counterfactual
+comparison remains mandatory. Extraction must then equal the original text
+with exactly the nominated space deleted.
 Literal spaces, unrelated letters, wrong operations, stale hashes, stale raw
 text and incorrect mappings fail with `ValueError`. No regular-expression
 replacement or PDF serialization is involved. Applying the same manifest to
@@ -327,7 +329,7 @@ page extraction can require substantial memory. Exact counterfactual checks
 establish a parser-inserted space, not semantic or visual correctness.
 
 Regression guidance: pypdf's `append(pages=...)` tuple denotes a range; use a
-list for explicit page indexes. Synthetic +126 fixtures must declare font
+list for explicit page indexes. Synthetic spacing fixtures must declare font
 widths giving the relevant insertion threshold, rather than assume that a
 standard font reproduces the diagnosed boundary.
 For future counterfactual changes, preserve plain extraction's stream decoding
