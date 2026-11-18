@@ -173,3 +173,18 @@ was not overwritten and remains pending; the AI result cannot certify
 visual accuracy, clinical correctness, licensing, current applicability, or
 document-wide coverage. Because the sample exposes spacing defects, the gate
 still does not approve a chunking experiment or a production correction.
+
+### Repository correction mechanism - November 17, 2026
+
+The separately authorized narrow correction is implemented as the explicit
+[corrected derived view](../text-extraction.md#explicit-corrected-derived-view).
+Raw extraction and original storage remain unchanged. Each reviewed change
+requires source identity/hash, a unique raw span, TJ operation/item coordinates
+and an isolated parser counterfactual proving exactly one space deletion.
+The mechanism targets the confirmed +126 boundary; offsets 287 and 418 are
+covered by a synthetic regression, without copying policy text into Git.
+
+This repository implementation did not open or alter external pilot files,
+apply a real-source manifest, or save corrected pilot text. Real source hashes
+and operation indexes must be supplied from the locally reviewed evidence.
+Existing visual-review limitations and the chunking gate remain in effect.

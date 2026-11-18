@@ -265,3 +265,76 @@ Real-document usefulness and rendering accuracy remain unverified.
   bytes; trusted-root and interruption limitations still apply.
 - [Inspection worker contract](inspection-worker.md): reuse trusted-runtime and
   Job Object mechanics without widening the existing inspection protocol.
+
+## Explicit corrected derived view
+
+`corrected_text_view` is an opt-in local computation in `text_extraction.py`.
+It returns a JSON-ready derived view containing the complete unchanged raw
+extraction, source retrieval ID and SHA-256, parser version, corrected pages,
+and per-edit provenance. It does not save files or change the extraction
+worker, raw artifact schema, PDF bytes, receipts or parser defaults.
+This API parses supplied bytes in the calling process: run it only within a
+resource-bounded local caller. It does not inherit the Windows worker's Job
+Object containment. No pilot files were changed by this implementation.
+
+Callers must explicitly supply the expected retrieval ID and source hash plus
+a tuple of `SpacingCorrection` records. Each record identifies a physical
+one-based page, zero-based raw output-space offset, exact unique context span
+and its start, zero-based content-stream operation index, and zero-based TJ
+array item index. These are reviewed inputs, never automatically generated
+from capital-Y patterns. Real-source identities and correction manifests are
+not hardcoded in the implementation.
+
+For each record the implementation rechecks source bytes, pinned parser,
+raw page text and context; rejects overlapping or repeated spans and external
+content (`Do`); requires a literal Y ending the left TJ string, a lowercase
+letter starting the right string, and exactly +126 between them. A separate
+in-memory content stream neutralizes only that numeric item. Its bytes are
+placed in a fresh decoded stream on a shallow page copy, retaining the source
+resources. Indirect streams and arrays of streams are resolved and concatenated
+in their original order for this trial only. Extraction must
+then equal the original text with exactly the nominated space deleted.
+Literal spaces, unrelated letters, wrong operations, stale hashes, stale raw
+text and incorrect mappings fail with `ValueError`. No regular-expression
+replacement or PDF serialization is involved. Applying the same manifest to
+corrected text fails the raw-baseline check; combined corrections use original
+coordinates in descending order and retain their original provenance.
+
+The confirmed amendments physical-page-1 evidence is offsets 287 and 418,
++126 adjustments, space width 129 and threshold 122.55. These measurements
+justify this narrow mechanism, not automatic correction of all candidates.
+The synthetic two-offset regression uses those coordinates without policy
+text. A separate metadata-only read-only probe on November 17, 2026 passed
+against the saved amendments original with pypdf 6.19.0: physical page 1,
+offset 287 / operation 50 / item 1 and offset 418 / operation 1425 / item 1.
+The original is 618,431 bytes and has an indirect single content stream.
+Each isolated correction reduced 504 characters to 503; both together
+produced 502. Exact deletion comparisons, unchanged raw provenance, original
+bytes and receipt bytes all passed. No external pilot artifacts were written.
+Callers still supply reviewed source identity and correction coordinates.
+
+The regression was caused by passing a direct `ContentStream` to extraction:
+pypdf then skipped the normal stream-byte parse with `forced_encoding='bytes'`.
+Default content-stream string decoding could change unrelated font bytes,
+making the exact counterfactual fail. A synthetic high-byte string reproduces
+this mismatch for both an indirect stream and an indirect array of indirect
+streams. Rebuilding only the trial stream bytes restores the normal extraction
+path; no complete PDF is serialized and parser defaults remain unchanged.
+
+The [official pypdf extraction guide](https://pypdf.readthedocs.io/en/6.19.0/user/extract-text.html)
+explains that positioned text makes whitespace inference difficult and that
+page extraction can require substantial memory. Exact counterfactual checks
+establish a parser-inserted space, not semantic or visual correctness.
+
+Regression guidance: pypdf's `append(pages=...)` tuple denotes a range; use a
+list for explicit page indexes. Synthetic +126 fixtures must declare font
+widths giving the relevant insertion threshold, rather than assume that a
+standard font reproduces the diagnosed boundary.
+For future counterfactual changes, preserve plain extraction's stream decoding
+path and test non-ASCII font bytes with indirect and array contents; ASCII-only
+fixtures cannot detect this regression. Run this focused module with
+`python -m unittest discover -s tests -p test_text_extraction.py -v` so its
+shared test helpers resolve. On November 17, 2026 all 12 methods passed on
+CPython 3.13 with pypdf 6.19.0, including
+`SpacingViewTests.test_indirect_contents_preserve_parser_string_decoding`
+(two content-structure subcases).

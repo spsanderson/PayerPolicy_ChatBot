@@ -281,3 +281,194 @@ class InputTests(unittest.TestCase):
             max_result_bytes=1, memory_bytes=16_777_216,
             timeout_seconds=0.01,
         ))
+
+class SpacingViewTests(unittest.TestCase):
+    """Require causal TJ evidence before deriving corrected text."""
+
+    def fixture(self, content: bytes = b'[(Y)126(our)] TJ', *,
+                content_array: bool = False) -> tuple:
+        """Build a synthetic spacing source and exact raw extraction."""
+        from datetime import datetime
+        from hashlib import sha256
+        from pypdf import PdfReader, PdfWriter
+        from pypdf.generic import DecodedStreamObject, NameObject
+        from payer_policy.text_extraction import (
+            ExtractionLimits, PageText, PdfTextExtraction,
+        )
+
+        writer = PdfWriter()
+        writer.append(PdfReader(BytesIO(text_pdf())), pages=[0])
+        from pypdf.generic import ArrayObject, NumberObject
+
+        font = writer.pages[0]['/Resources']['/Font']['/F1']
+        font[NameObject('/Subtype')] = NameObject('/TrueType')
+        font[NameObject('/FirstChar')] = NumberObject(32)
+        font[NameObject('/LastChar')] = NumberObject(121)
+        font[NameObject('/Widths')] = ArrayObject(
+            [NumberObject(258)] + [NumberObject(500)] * 89)
+        stream = DecodedStreamObject()
+        stream.set_data(b'BT /F1 12 Tf 30 100 Td ' + content + b' ET')
+        contents = writer._add_object(stream)
+        if content_array:
+            prefix = DecodedStreamObject()
+            prefix.set_data(b'q Q')
+            contents = writer._add_object(ArrayObject([
+                writer._add_object(prefix), contents,
+            ]))
+        writer.pages[0][NameObject('/Contents')] = contents
+        output = BytesIO()
+        writer.write(output)
+        body = output.getvalue()
+        text = PdfReader(BytesIO(body)).pages[0].extract_text()
+        raw = PdfTextExtraction(
+            'a' * 32, sha256(body).hexdigest(), 1, (1,),
+            (PageText(1, text, 'text'),),
+            datetime.now(timezone.utc), ExtractionLimits(),
+        )
+        return body, raw
+
+    def test_derived_view_proves_one_adjustment_and_keeps_raw(self) -> None:
+        """Remove only a mapped inferred space with full provenance."""
+        from payer_policy.text_extraction import (
+            SpacingCorrection, corrected_text_view,
+        )
+
+        body, raw = self.fixture()
+        self.assertEqual(raw.pages[0].text, 'Y our')
+        edit = SpacingCorrection(1, 1, 'Y our', 0, 3, 1)
+        view = corrected_text_view(
+            body, raw, retrieval_id=raw.retrieval_id,
+            source_sha256=raw.sha256, corrections=(edit,),
+        )
+        self.assertEqual(view['pages'][0]['text'], 'Your')
+        self.assertEqual(raw.pages[0].text, 'Y our')
+        self.assertEqual(view['corrections'][0]['adjustment'], 126)
+        self.assertEqual(view['source_sha256'], raw.sha256)
+
+    def test_indirect_contents_preserve_parser_string_decoding(self) -> None:
+        """Reparse trial bytes like plain extraction, also across arrays."""
+        from pypdf import PdfReader
+        from pypdf.generic import ArrayObject, IndirectObject
+        from payer_policy.text_extraction import (
+            SpacingCorrection, corrected_text_view, extraction_facts,
+        )
+
+        for content_array in (False, True):
+            with self.subTest(content_array=content_array):
+                body, raw = self.fixture(
+                    b'[(Y)126(our)] TJ (\\200) Tj',
+                    content_array=content_array,
+                )
+                reader = PdfReader(BytesIO(body), strict=True)
+                page = reader.pages[0]
+                self.assertIsInstance(page.raw_get('/Contents'),
+                                      IndirectObject)
+                if content_array:
+                    self.assertIsInstance(page['/Contents'], ArrayObject)
+                    self.assertTrue(all(isinstance(part, IndirectObject)
+                                        for part in page['/Contents']))
+                original_stream = page.get_contents().get_data()
+                before = extraction_facts(raw)
+                operation = 5 if content_array else 3
+                edit = SpacingCorrection(1, 1, 'Y our', 0, operation, 1)
+                view = corrected_text_view(
+                    body, raw, retrieval_id=raw.retrieval_id,
+                    source_sha256=raw.sha256, corrections=(edit,),
+                )
+                self.assertEqual(view['pages'][0]['text'],
+                                 raw.pages[0].text[:1]
+                                 + raw.pages[0].text[2:])
+                self.assertEqual(view['raw_extraction'], before)
+                self.assertEqual(extraction_facts(raw), before)
+                self.assertEqual(page.get_contents().get_data(),
+                                 original_stream)
+                self.assertEqual(page.extract_text(extraction_mode='plain'),
+                                 raw.pages[0].text)
+                self.assertEqual(view['corrections'][0]['operation_index'],
+                                 operation)
+                self.assertEqual(view['corrections'][0]['proof'],
+                                 'isolated-TJ-neutralization-'
+                                 'exact-single-deletion')
+
+    def test_fail_closed_guards(self) -> None:
+        """Reject stale identities, overlap and incorrect mappings."""
+        from dataclasses import replace
+        from payer_policy.text_extraction import (
+            SpacingCorrection, corrected_text_view,
+        )
+
+        body, raw = self.fixture()
+        edit = SpacingCorrection(1, 1, 'Y our', 0, 3, 1)
+        for changes in (
+            {'source_sha256': 'b' * 64},
+            {'retrieval_id': 'b' * 32},
+            {'corrections': (edit, edit)},
+            {'corrections': (replace(edit, operation_index=2),)},
+            {'corrections': (replace(edit, expected_span='Y other'),)},
+            {'corrections': (replace(edit, page_number=2),)},
+        ):
+            kwargs = dict(retrieval_id=raw.retrieval_id,
+                          source_sha256=raw.sha256, corrections=(edit,))
+            kwargs.update(changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                corrected_text_view(body, raw, **kwargs)
+
+    def test_two_original_offsets_and_other_text_are_preserved(self) -> None:
+        """Exercise diagnostic offsets without including policy text."""
+        from payer_policy.text_extraction import (
+            SpacingCorrection, corrected_text_view,
+        )
+
+        content = (b'[(' + b'a' * 286 + b'Y)126(our '
+                   + b'b' * 125 + b'Y)126(ours)] TJ')
+        body, raw = self.fixture(content)
+        self.assertEqual(raw.pages[0].text[287], ' ')
+        self.assertEqual(raw.pages[0].text[418], ' ')
+        edits = (SpacingCorrection(1, 287, 'aY our ', 285, 3, 1),
+                 SpacingCorrection(1, 418, 'bY ours', 416, 3, 3))
+        view = corrected_text_view(
+            body, raw, retrieval_id=raw.retrieval_id,
+            source_sha256=raw.sha256, corrections=edits,
+        )
+        text = raw.pages[0].text
+        expected = text[:287] + text[288:418] + text[419:]
+        self.assertEqual(view['pages'][0]['text'], expected)
+        self.assertEqual(view['raw_extraction']['pages'][0]['text'], text)
+
+    def test_wrong_adjustment_and_stale_raw_are_refused(self) -> None:
+        """Counterfactual evidence must match the saved parser output."""
+        from dataclasses import replace
+        from payer_policy.text_extraction import (
+            PageText, SpacingCorrection, corrected_text_view,
+        )
+
+        for content in (b'[(Y)127(our)] TJ', b'[(Y)126(our)] TJ'):
+            body, raw = self.fixture(content)
+            if b'126' in content:
+                raw = replace(raw, pages=(PageText(1, 'Y our!', 'text'),))
+            with self.subTest(content=content), self.assertRaises(ValueError):
+                corrected_text_view(
+                    body, raw, retrieval_id=raw.retrieval_id,
+                    source_sha256=raw.sha256,
+                    corrections=(SpacingCorrection(
+                        1, 1, 'Y our', 0, 3, 1),),
+                )
+
+    def test_literal_unrelated_and_repeated_spans_are_refused(self) -> None:
+        """Never infer approval from letter patterns or repeated text."""
+        from payer_policy.text_extraction import (
+            SpacingCorrection, corrected_text_view,
+        )
+
+        for content, span in (
+            (b'[(Y )126(our)] TJ', 'Y our'),
+            (b'[(X)126(our)] TJ', 'X our'),
+            (b'[(Y)126(our Y)126(our)] TJ', 'Y our'),
+        ):
+            body, raw = self.fixture(content)
+            edit = SpacingCorrection(1, 1, span, 0, 3, 1)
+            with self.subTest(content=content), self.assertRaises(ValueError):
+                corrected_text_view(
+                    body, raw, retrieval_id=raw.retrieval_id,
+                    source_sha256=raw.sha256, corrections=(edit,),
+                )
