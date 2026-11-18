@@ -319,7 +319,8 @@ class SpacingViewTests(unittest.TestCase):
         output = BytesIO()
         writer.write(output)
         body = output.getvalue()
-        text = PdfReader(BytesIO(body)).pages[0].extract_text()
+        text = PdfReader(BytesIO(body), strict=True).pages[0].extract_text(
+            extraction_mode='plain')
         raw = PdfTextExtraction(
             'a' * 32, sha256(body).hexdigest(), 1, (1,),
             (PageText(1, text, 'text'),),
