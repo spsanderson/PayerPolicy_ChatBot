@@ -296,7 +296,7 @@ def corrected_text_view(
                      'operation_index', 'item_index'):
             if type(getattr(edit, name)) is not int:
                 raise ValueError('integer coordinates required')
-        if type(edit.adjustment) is not int or isinstance(edit.adjustment, bool):
+        if type(edit.adjustment) is not int:
             raise ValueError('integer adjustment required')
         text = pages.get(edit.page_number)
         start = edit.span_start
