@@ -238,3 +238,137 @@ def extraction_from_facts(facts: dict) -> PdfTextExtraction:
     result = PdfTextExtraction(**values)
     validate_extraction(result)
     return result
+
+
+@dataclass(frozen=True)
+class SpacingCorrection:
+    """Identify one reviewed TJ item and its exact raw output span."""
+
+    page_number: int
+    space_offset: int
+    expected_span: str
+    span_start: int
+    operation_index: int
+    item_index: int
+
+
+def corrected_text_view(
+    source_bytes: bytes, raw: PdfTextExtraction, *, retrieval_id: str,
+    source_sha256: str, corrections: tuple[SpacingCorrection, ...],
+) -> dict:
+    """Derive text only after exact, isolated TJ counterfactual checks.
+
+    Explicit local API; unlike the extraction worker this parses in-process.
+    Never use with untrusted PDFs outside a resource-bounded caller.
+    No bytes, receipts, raw results or parser globals are modified.
+    """
+    from copy import deepcopy
+    from hashlib import sha256
+    import pypdf
+    from pypdf import PdfReader
+    from pypdf.generic import (
+        ContentStream, DecodedStreamObject, NameObject, NumberObject,
+    )
+    from pypdf.generic import TextStringObject
+
+    validate_extraction(raw)
+    if (type(source_bytes) is not bytes
+            or len(source_bytes) > raw.limits.max_bytes
+            or retrieval_id != raw.retrieval_id
+            or source_sha256 != raw.sha256
+            or sha256(source_bytes).hexdigest() != source_sha256
+            or pypdf.__version__ != raw.parser_version):
+        raise ValueError('stale source identity or parser')
+    if (type(corrections) is not tuple or not corrections
+            or len(corrections) > 20):
+        raise ValueError('explicit bounded corrections required')
+    reader = PdfReader(BytesIO(source_bytes), strict=True)
+    if reader.is_encrypted or len(reader.pages) != raw.page_count:
+        raise ValueError('source page mismatch or encryption')
+    pages = {page.page_number: page.text for page in raw.pages}
+    evidence = []
+    occupied = {}
+    for edit in corrections:
+        if type(edit) is not SpacingCorrection:
+            raise ValueError('invalid correction')
+        for name in ('page_number', 'space_offset', 'span_start',
+                     'operation_index', 'item_index'):
+            if type(getattr(edit, name)) is not int:
+                raise ValueError('integer coordinates required')
+        text = pages.get(edit.page_number)
+        start = edit.span_start
+        offset = edit.space_offset
+        span = edit.expected_span
+        if (text is None or type(span) is not str or not span
+                or start < 0 or not start <= offset < start + len(span)
+                or text[start:start + len(span)] != span
+                or text.count(span) != 1 or offset < 1
+                or text[offset - 1:offset + 1] != 'Y '
+                or offset + 1 >= len(text)
+                or not 'a' <= text[offset + 1] <= 'z'):
+            raise ValueError('stale, repeated or unrelated output span')
+        intervals = occupied.setdefault(edit.page_number, [])
+        end = start + len(span)
+        if any(start < right and left < end for left, right in intervals):
+            raise ValueError('overlapping correction spans')
+        intervals.append((start, end))
+        page = reader.pages[edit.page_number - 1]
+        if page.extract_text(extraction_mode='plain') != text:
+            raise ValueError('raw parser text mismatch')
+        stream = ContentStream(page.get_contents(), reader)
+        if any(operator == b'Do' for _, operator in stream.operations):
+            raise ValueError('nested or external content is unsupported')
+        op = edit.operation_index
+        item = edit.item_index
+        if not 0 <= op < len(stream.operations):
+            raise ValueError('operation outside content stream')
+        operands, operator = stream.operations[op]
+        if operator != b'TJ' or len(operands) != 1:
+            raise ValueError('not a TJ operation')
+        array = operands[0]
+        if not 0 < item < len(array) - 1:
+            raise ValueError('item outside TJ interior')
+        left, adjustment, right = array[item - 1:item + 2]
+        if (not isinstance(left, TextStringObject)
+                or not isinstance(right, TextStringObject)
+                or not left.endswith('Y') or not right
+                or not 'a' <= right[0] <= 'z'
+                or not isinstance(adjustment, (int, float))
+                or isinstance(adjustment, bool) or adjustment != 126):
+            raise ValueError('not the approved TJ boundary')
+        # Neutralize one item, never rewrite or serialize a PDF.
+        trial = deepcopy(stream)
+        trial.operations[op][0][0][item] = NumberObject(0)
+        from copy import copy
+        trial_page = copy(page)
+        # Plain extraction reparses stream bytes with forced_encoding='bytes'.
+        # A direct ContentStream bypasses that path and can decode unrelated
+        # font bytes differently. Flatten indirect/array contents only in this
+        # isolated trial, then let extract_text use its normal decoding path.
+        trial_contents = DecodedStreamObject()
+        trial_contents.set_data(trial.get_data())
+        trial_page[NameObject('/Contents')] = trial_contents
+        expected = text[:offset] + text[offset + 1:]
+        if trial_page.extract_text(extraction_mode='plain') != expected:
+            raise ValueError('ambiguous TJ to output mapping')
+        evidence.append({
+            **asdict(edit), 'adjustment': 126, 'replacement': '',
+            'raw_page_sha256': sha256(text.encode('utf-8')).hexdigest(),
+            'proof': 'isolated-TJ-neutralization-exact-single-deletion',
+        })
+    corrected = []
+    for page in raw.pages:
+        text = page.text
+        offsets = sorted((edit.space_offset for edit in corrections
+                          if edit.page_number == page.page_number),
+                         reverse=True)
+        for offset in offsets:
+            text = text[:offset] + text[offset + 1:]
+        corrected.append({'page_number': page.page_number, 'text': text})
+    return {
+        'schema_version': 1, 'kind': 'corrected-derived-text',
+        'retrieval_id': retrieval_id, 'source_sha256': source_sha256,
+        'parser_name': raw.parser_name, 'parser_version': raw.parser_version,
+        'mode': raw.mode, 'corrections': evidence, 'pages': corrected,
+        'raw_extraction': extraction_facts(raw),
+    }
