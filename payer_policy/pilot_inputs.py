@@ -39,13 +39,10 @@ def validate_pilot_page_record(record: object) -> list[str]:
         errors.append("sha256: expected 64 lowercase hexadecimal characters")
 
     page_number = record.get("page_number")
-    if (
-        source_id in APPROVED_PAGES
-        and page_number not in APPROVED_PAGES[source_id]
-    ):
-        errors.append("page_number: not in the approved twelve-page sample")
-    elif type(page_number) is not int or page_number < 1:
+    if type(page_number) is not int or page_number < 1:
         errors.append("page_number: expected a positive integer")
+    elif source_id in APPROVED_PAGES and page_number not in APPROVED_PAGES[source_id]:
+        errors.append("page_number: not in the approved twelve-page sample")
 
     raw_artifact = record.get("raw_artifact")
     if not isinstance(raw_artifact, str) or not raw_artifact.strip():
