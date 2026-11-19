@@ -137,6 +137,9 @@ a development requirement, not the intended end-user installation experience.
   The original HTML remains available as an offline snapshot.
 - [Incremental delivery plan](docs/implementation-plan.md): phases, modules,
   function contracts, acceptance gates, and next increment.
+- [Bounded chunking/retrieval pilot plan](docs/chunking-retrieval-pilot-plan.md):
+  proposed reviewed-sample scope, methods, provenance contract, evaluation,
+  and approval decisions. It is not implementation approval.
 - [Development conventions](CONTRIBUTING.md): small test-first changes and living
   documentation.
 
