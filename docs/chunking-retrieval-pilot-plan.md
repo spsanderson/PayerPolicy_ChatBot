@@ -83,6 +83,13 @@ If a protected block exceeds the configured size, the chunker will split it only
 at an explicit safe line boundary and record the split. It will never invent a
 missing table layout.
 
+The initial pilot setting will target approximately **400–700 words per chunk**
+with **zero overlap**. The target is a starting measurement setting, not a
+production recommendation. Zero overlap makes duplicated retrieval results and
+citation ambiguity easier to observe; structural grouping is more important than
+forcing every chunk to the target size. The evaluation report may recommend a
+different setting after inspecting misses and boundary defects.
+
 Chunk text is not normalized. Whitespace, punctuation, line order, and page
 content remain as supplied by the selected raw or corrected derived artifact.
 The corrected view is an input choice recorded in provenance, not a replacement
@@ -108,6 +115,24 @@ This method is preferred for the first pilot because it is local, reproducible,
 explainable, inexpensive, and independent of an embedding model or provider.
 It gives a useful baseline before introducing semantic retrieval, whose gains
 would otherwise be difficult to separate from chunking or citation defects.
+
+## Framework decision
+
+The first implementation will **not depend on LangChain** or another RAG
+framework. The project-local chunker and lexical retriever will define the
+behavioral contract first.
+
+This is the safer method for this pilot because the sample is small and the
+important questions are evidence questions: whether a chunk boundary is safe,
+whether a table/list/heading stayed coherent, and whether a citation resolves to
+the exact source page. A framework would be useful only if it preserves those
+fields and behaviors without hidden normalization or nondeterministic defaults.
+
+After the baseline passes, a framework adapter may be evaluated separately. It
+would have to consume the same validated chunks, preserve the existing
+`chunk_id` and provenance fields, and pass the same retrieval test set. That
+comparison would measure framework or embedding value rather than silently
+changing the pilot's definition of a correct result.
 
 ## Evaluation design
 
