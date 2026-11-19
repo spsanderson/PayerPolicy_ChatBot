@@ -1,6 +1,11 @@
 # Bounded chunking and retrieval pilot
 
-Status: **proposed — review required; not implemented**.
+Status: **Slice 1 in progress; pilot not complete**.
+
+Implemented so far: the first pure validator in
+`payer_policy/pilot_inputs.py`, with focused tests for an approved page and an
+unapproved physical page. Manifest loading, on-disk artifact verification,
+chunking, retrieval, and evaluation remain unimplemented.
 
 ## Purpose
 
