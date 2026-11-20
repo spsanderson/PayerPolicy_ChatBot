@@ -363,32 +363,54 @@ Approval covers synthetic fixtures only. Real-policy text processing and
 accuracy evaluation require another approval. No OCR, chunking, embeddings,
 search, chat, library-wide processing, downloads, or document uploads.
 
+### Text-quality gate — bounded reviewed sample passed
+
+The final local text-quality gate for the twelve-page reviewed sample passed on
+November 18, 2026. The eleven diagnosed spacing defects were corrected only in
+separate derived views; originals and raw extraction remain unchanged. The
+closeout is recorded in [the PA text-quality pilot review](source-reviews/pa-text-quality-pilot.md).
+This clears the sample for a separately scoped chunking/retrieval pilot, not
+for document-wide indexing or a full RAG rollout.
+
 ### Phase 1 acceptance gate
 
 Document an official-source applicability map, access failures/restrictions,
 member-group gaps, representative extraction cases, and packaging results.
 Fingerprint tests alone do not satisfy this gate.
 
-## Phase 2: End-to-end slice (planned)
+## Phase 2: Bounded chunking and retrieval pilot (proposed)
+
+The approval-ready [pilot specification and implementation plan](chunking-retrieval-pilot-plan.md)
+defines the twelve-page input boundary, provenance-preserving chunk contract,
+deterministic lexical retrieval baseline, evaluation set, failure boundaries,
+and acceptance criteria. It is a planning artifact only; no chunking, indexing,
+embedding, or retrieval implementation is included yet.
+
+The pilot must validate chunk boundaries; preservation of headings, lists,
+tables, and page provenance; exact source-document and physical-page citations;
+and retrieval quality on a small test set. Passing it will not authorize
+document-wide production indexing or a full RAG rollout.
+
+## Phase 3: End-to-end slice (planned)
 
 Modules: approved-source acquisition and candidate validation; integrate the
 existing original-byte storage helper; extraction; keyword and semantic index;
 retrieval; provider adapter; citation viewer.
 Gate: real document -> real answer -> exact original passage, with provenance.
 
-## Phase 3: Policy lifecycle (planned)
+## Phase 4: Policy lifecycle (planned)
 
 Modules: source connectors; update comparison; version metadata; extraction
 corrections; chunk preview; persistent/resumable jobs.
 Gate: updates retain originals; interruptions recover; edits are auditable.
 
-## Phase 4: Retrieval and providers (planned)
+## Phase 5: Retrieval and providers (planned)
 
 Modules: applicability filtering; hybrid ranking; evaluation; provider settings.
 Gate: wrong-plan, stale, conflict, and insufficient-evidence tests; model
 switching without reindexing. Confirm domain judgments with Steve.
 
-## Phase 5: Windows release (planned)
+## Phase 6: Windows release (planned)
 
 Modules: installer/launcher; protected credentials; backup/restore; upgrades;
 accessibility; loopback service security.
