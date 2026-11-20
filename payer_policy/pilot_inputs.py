@@ -57,3 +57,59 @@ def validate_pilot_page_record(record: object) -> list[str]:
         errors.append("quality_verdict: expected an approved usable verdict")
 
     return errors
+
+
+def validate_pilot_manifest(records: object) -> list[str]:
+    """Return errors for the complete twelve-page pilot manifest.
+
+    The function delegates field checks to ``validate_pilot_page_record`` and
+    then checks collection identity: every approved document/page pair must
+    occur exactly once. It inspects records without sorting, removing, or
+    modifying them; it does not read artifact paths or hash files on disk.
+    """
+    if not isinstance(records, (list, tuple)):
+        return ["records: expected a list or tuple"]
+
+    errors: list[str] = []
+    expected = {
+        (source_id, page_number)
+        for source_id, pages in APPROVED_PAGES.items()
+        for page_number in pages
+    }
+    observed: set[tuple[str, int]] = set()
+
+    for index, record in enumerate(records):
+        record_errors = validate_pilot_page_record(record)
+        errors.extend(
+            f"records[{index}].{error}"
+            if ":" in error
+            else f"records[{index}]: {error}"
+            for error in record_errors
+        )
+        if not isinstance(record, Mapping):
+            continue
+        source_id = record.get("source_id")
+        page_number = record.get("page_number")
+        if (
+            isinstance(source_id, str)
+            and source_id in APPROVED_PAGES
+            and type(page_number) is int
+        ):
+            identity = (source_id, page_number)
+            if identity in observed:
+                errors.append(
+                    f"records[{index}]: duplicate page identity "
+                    f"{source_id} page {page_number}"
+                )
+            observed.add(identity)
+            if identity not in expected:
+                errors.append(
+                    f"records[{index}]: unexpected page identity "
+                    f"{source_id} page {page_number}"
+                )
+
+    for source_id, page_number in sorted(expected - observed):
+        errors.append(
+            f"manifest: missing approved page {source_id} page {page_number}"
+        )
+    return errors

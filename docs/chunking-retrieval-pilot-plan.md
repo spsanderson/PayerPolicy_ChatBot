@@ -3,9 +3,11 @@
 Status: **Slice 1 in progress; pilot not complete**.
 
 Implemented so far: the first pure validator in
-`payer_policy/pilot_inputs.py`, with focused tests for an approved page and an
-unapproved physical page. Manifest loading, on-disk artifact verification,
-chunking, retrieval, and evaluation remain unimplemented.
+`payer_policy/pilot_inputs.py`, plus complete twelve-page manifest validation.
+Focused tests cover approved pages, collection completeness, duplicate and
+unexpected identities, nested errors, and input immutability. Manifest loading,
+on-disk artifact verification, chunking, retrieval, and evaluation remain
+unimplemented.
 
 ## Purpose
 
