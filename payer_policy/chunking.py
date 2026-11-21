@@ -33,8 +33,6 @@ def _line_ranges(text: str) -> list[tuple[int, int, int, str]]:
         end = offset + len(line)
         ranges.append((number, offset, end, line))
         offset = end
-    if text and not ranges:
-        ranges.append((1, 0, len(text), text))
     return ranges
 
 
