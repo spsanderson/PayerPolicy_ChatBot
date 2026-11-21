@@ -198,7 +198,8 @@ def validate_pilot_artifact_record(record: object) -> list[str]:
         paths["correction_manifest"] = record.get("correction_manifest")
     for field, value in paths.items():
         if not isinstance(value, str) or not value.strip():
-            errors.append(f"{field}: required nonblank relative path")
+            if field != "raw_artifact":
+                errors.append(f"{field}: required nonblank relative path")
             continue
         path = Path(value)
         if path.is_absolute() or ".." in path.parts:
@@ -233,16 +234,17 @@ def validate_pilot_artifact_record(record: object) -> list[str]:
 def _resolve_pilot_artifact(root: Path, value: object, field: str) -> Path:
     """Resolve one existing file under root without allowing path escape."""
     if not isinstance(root, Path):
-        raise TypeError("root must be a Path")
-    if not root.is_absolute():
-        raise ValueError("root must be an absolute path")
+        raise PilotArtifactError("invalid_artifact_metadata", "root")
+    try:
+        root_path = root.resolve(strict=True)
+    except (TypeError, ValueError) as exc:
+        raise PilotArtifactError("invalid_artifact_metadata", "root") from exc
     if not isinstance(value, str):
         raise PilotArtifactError("invalid_artifact_metadata", field)
     relative = Path(value)
     if relative.is_absolute() or ".." in relative.parts:
         raise PilotArtifactError("artifact_path_escape", field)
     try:
-        root_path = root.resolve(strict=True)
         candidate = (root / relative).resolve(strict=True)
     except FileNotFoundError as exc:
         raise PilotArtifactError("artifact_missing", field) from exc

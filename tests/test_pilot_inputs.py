@@ -1,6 +1,7 @@
 """Tests for the bounded pilot input contract."""
 import hashlib
 import json
+import os
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -253,6 +254,46 @@ class PilotArtifactTests(unittest.TestCase):
         record["raw_artifact"] = "../outside.txt"
         errors = validate_pilot_artifact_record(record)
         self.assertTrue(any("raw_artifact" in error for error in errors))
+
+    def test_reports_single_raw_artifact_missing_error(self) -> None:
+        """Do not duplicate missing/blank raw_artifact validation errors."""
+        from payer_policy.pilot_inputs import validate_pilot_artifact_record
+
+        record, _, _ = artifact_record()
+        record["raw_artifact"] = ""
+        errors = validate_pilot_artifact_record(record)
+        raw_errors = [
+            error for error in errors if error.startswith("raw_artifact:")
+        ]
+        self.assertEqual(raw_errors, ["raw_artifact: required nonblank path"])
+
+    def test_rejects_non_path_root_with_stable_error_code(self) -> None:
+        """Map invalid root type to invalid_artifact_metadata."""
+        from payer_policy.pilot_inputs import (
+            PilotArtifactError, _resolve_pilot_artifact,
+        )
+
+        with self.assertRaises(PilotArtifactError) as caught:
+            _resolve_pilot_artifact("not-a-path", "artifact.txt", "raw_artifact")
+        self.assertEqual(caught.exception.code, "invalid_artifact_metadata")
+
+    def test_accepts_relative_existing_root(self) -> None:
+        """Allow relative roots that resolve to an existing artifact tree."""
+        from payer_policy.pilot_inputs import _resolve_pilot_artifact
+
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            relative = "page-text/pa-certificate-2025/page-001.txt"
+            expected = self.write_artifact(root, relative, b"ok\n").resolve()
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(root.parent)
+                resolved = _resolve_pilot_artifact(
+                    Path(root.name), relative, "raw_artifact"
+                )
+            finally:
+                os.chdir(original_cwd)
+        self.assertEqual(resolved, expected)
 
     def test_loads_matching_raw_artifact(self) -> None:
         """Return immutable page facts when raw bytes match the manifest."""
