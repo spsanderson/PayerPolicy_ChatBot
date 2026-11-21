@@ -79,14 +79,13 @@ def validate_pilot_manifest(records: object) -> list[str]:
     observed: set[tuple[str, int]] = set()
 
     for index, record in enumerate(records):
-        record_errors = validate_pilot_page_record(record)
-        errors.extend(
-            f"records[{index}].{error}"
-            if ":" in error
-            else f"records[{index}]: {error}"
-            for error in record_errors
-        )
-        if not isinstance(record, Mapping):
+        for error in validate_pilot_page_record(record):
+            if error.startswith("record:"):
+                errors.append(f"records[{index}]: {error}")
+            elif ":" in error:
+                errors.append(f"records[{index}].{error}")
+            else:
+                errors.append(f"records[{index}]: {error}")
             continue
         source_id = record.get("source_id")
         page_number = record.get("page_number")
