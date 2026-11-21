@@ -274,7 +274,8 @@ class PilotArtifactTests(unittest.TestCase):
         )
 
         with self.assertRaises(PilotArtifactError) as caught:
-            _resolve_pilot_artifact("not-a-path", "artifact.txt", "raw_artifact")
+            _resolve_pilot_artifact(
+                "not-a-path", "artifact.txt", "raw_artifact")
         self.assertEqual(caught.exception.code, "invalid_artifact_metadata")
 
     def test_accepts_relative_existing_root(self) -> None:

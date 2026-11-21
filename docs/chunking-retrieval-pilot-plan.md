@@ -1,12 +1,14 @@
 # Bounded chunking and retrieval pilot
 
-Status: **Slice 1 in progress; pilot not complete**.
+Status: **Slice 2A implemented; pilot not complete**.
 
 Implemented so far: the first pure validator in
 `payer_policy/pilot_inputs.py`, plus complete twelve-page manifest validation.
 On-disk artifact verification now validates text hashes, safe paths, UTF-8,
 corrected-view provenance, and complete-batch loading with focused synthetic
-tests. Chunking, retrieval, and evaluation remain unimplemented.
+tests. Deterministic page-block segmentation now preserves exact text spans and
+labels conservative heading, paragraph, list, table, and unknown structures.
+Chunk packing, retrieval, and evaluation remain unimplemented.
 
 ## Purpose
 
@@ -190,20 +192,26 @@ Implemented module: `payer_policy/pilot_inputs.py`.
 **Why:** provenance errors must fail before chunking; otherwise later retrieval
 results cannot be trusted or reproduced.
 
-### Slice 2 — deterministic structure-aware chunking
+### Slice 2A — deterministic page-block segmentation
 
-Proposed module: `payer_policy/chunking.py`.
+Implemented module: `payer_policy/chunking.py`.
 
-- Preserve source text exactly.
-- Segment page-local blocks using conservative line and blank-line rules.
-- Protect headings, contiguous lists, and table-like blocks from accidental
-  splitting.
-- Apply a small explicit chunk-size setting and record all boundary decisions.
-- Emit a validated chunk artifact without overwriting any input.
+- Preserve source text exactly through zero-based string offsets.
+- Segment page-local blocks using conservative blank-line boundaries.
+- Label heading, paragraph, list, table, and unknown structures without
+  reconstructing visual layout.
+- Return immutable blocks with one-based line provenance and uncertainty notes.
 
 **Why:** a simple, inspectable chunker makes boundary mistakes visible and avoids
 embedding layout assumptions into a production abstraction before the sample is
 understood.
+
+### Slice 2B — protected-block chunk packing (planned)
+
+Add the explicit 400–700-word, zero-overlap packing policy only after Slice 2A
+passes independent review. This later slice will keep headings, lists, and
+table-like blocks together where possible and record any safe oversized-block
+split.
 
 ### Slice 3 — chunk preview and structural review artifact
 
@@ -309,5 +317,5 @@ add an embedding package, vector database, or provider SDK for this pilot.
 6. Approve the proposed evaluation cases and metrics as exploratory evidence,
    not production thresholds.
 
-No chunking, dependency installation, indexing, or external publication is
+No chunk packing, dependency installation, indexing, or external publication is
 included in this increment.
