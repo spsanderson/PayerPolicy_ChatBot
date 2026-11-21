@@ -196,7 +196,6 @@ def validate_pilot_artifact_record(record: object) -> list[str]:
     }
     if record.get("selected_artifact") == "corrected":
         paths["correction_manifest"] = record.get("correction_manifest")
-    for field, value in paths.items():
         if not isinstance(value, str) or not value.strip():
             if field != "raw_artifact":
                 errors.append(f"{field}: required nonblank relative path")
