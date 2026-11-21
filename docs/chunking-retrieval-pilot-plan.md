@@ -4,10 +4,9 @@ Status: **Slice 1 in progress; pilot not complete**.
 
 Implemented so far: the first pure validator in
 `payer_policy/pilot_inputs.py`, plus complete twelve-page manifest validation.
-Focused tests cover approved pages, collection completeness, duplicate and
-unexpected identities, nested errors, and input immutability. Manifest loading,
-on-disk artifact verification, chunking, retrieval, and evaluation remain
-unimplemented.
+On-disk artifact verification now validates text hashes, safe paths, UTF-8,
+corrected-view provenance, and complete-batch loading with focused synthetic
+tests. Chunking, retrieval, and evaluation remain unimplemented.
 
 ## Purpose
 
@@ -176,15 +175,17 @@ behind an aggregate score.
 
 ## Implementation slices after approval
 
-### Slice 1 — approved input manifest
+### Slice 1 — approved input manifest and artifact verification
 
-Proposed module: `payer_policy/pilot_inputs.py`.
+Implemented module: `payer_policy/pilot_inputs.py`.
 
-- Define typed manifest/page records.
-- Validate source identity, hashes, page allowlist, artifact choice, and
-  correction provenance.
-- Add tests for valid input, stale hash, unapproved page, duplicate page,
-  missing corrected artifact, and raw-artifact mutation.
+- Validate source identity, PDF/text hashes, page allowlist, artifact choice,
+  safe local paths, UTF-8, and correction provenance.
+- Load immutable validated page objects without modifying source artifacts.
+- Reject incomplete batches rather than returning partial page facts.
+- Focused synthetic tests cover valid input, stale hashes, unapproved pages,
+  duplicate pages, missing artifacts, corrected provenance, and mutation-safe
+  loading.
 
 **Why:** provenance errors must fail before chunking; otherwise later retrieval
 results cannot be trusted or reproduced.
@@ -308,5 +309,5 @@ add an embedding package, vector database, or provider SDK for this pilot.
 6. Approve the proposed evaluation cases and metrics as exploratory evidence,
    not production thresholds.
 
-No implementation, dependency installation, indexing, or external publication
-is included in this planning change.
+No chunking, dependency installation, indexing, or external publication is
+included in this increment.
