@@ -52,6 +52,9 @@ class ValidatedPilotPage:
     text: str
     artifact_kind: str
     quality_verdict: str
+    parser_name: str
+    parser_version: str
+    extraction_mode: str
     correction_manifest: Path | None = None
 
 
@@ -178,6 +181,11 @@ def validate_pilot_artifact_record(record: object) -> list[str]:
     if not isinstance(record, Mapping):
         return errors
 
+    for field in ("parser_name", "parser_version", "extraction_mode"):
+        value = record.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{field}: required nonblank string")
+
     for field in (
         "raw_text_sha256", "selected_text_sha256",
     ):
@@ -299,13 +307,55 @@ def _verify_correction_manifest(
     if not isinstance(manifest, Mapping):
         raise PilotArtifactError(
             "correction_provenance_mismatch", "manifest must be an object")
-    required = {
+    normalized_required = {
         "retrieval_id", "sha256", "page_number", "raw_text_sha256",
-        "selected_text_sha256",
+        "selected_text_sha256", "correction_count", "corrections",
+        "raw_preserved", "pdf_overwritten",
     }
-    if any(manifest.get(field) != record.get(field) for field in required):
+    if not normalized_required.issubset(manifest):
         raise PilotArtifactError(
-            "correction_provenance_mismatch", "manifest identity mismatch")
+            "correction_provenance_mismatch", "unsupported manifest schema"
+        )
+    if any(
+        manifest.get(field) != record.get(field)
+        for field in {
+            "retrieval_id", "sha256", "page_number", "raw_text_sha256",
+            "selected_text_sha256",
+        }
+    ):
+        raise PilotArtifactError(
+            "correction_provenance_mismatch",
+            "normalized manifest identity mismatch",
+        )
+    if manifest.get("raw_preserved") is not True:
+        raise PilotArtifactError(
+            "correction_provenance_mismatch", "raw text was not preserved"
+        )
+    if manifest.get("pdf_overwritten") is not False:
+        raise PilotArtifactError(
+            "correction_provenance_mismatch", "source PDF was overwritten"
+        )
+    corrections = manifest.get("corrections")
+    count = manifest.get("correction_count")
+    if type(count) is not int or count < 1:
+        raise PilotArtifactError(
+            "correction_provenance_mismatch", "invalid correction count"
+        )
+    if not isinstance(corrections, list) or len(corrections) != count:
+        raise PilotArtifactError(
+            "correction_provenance_mismatch", "incomplete correction evidence"
+        )
+    for correction in corrections:
+        if not isinstance(correction, Mapping):
+            raise PilotArtifactError(
+                "correction_provenance_mismatch", "invalid correction evidence"
+            )
+        for field in ("offset", "operation_index", "item_index", "adjustment"):
+            if type(correction.get(field)) is not int:
+                raise PilotArtifactError(
+                    "correction_provenance_mismatch",
+                    "invalid correction evidence",
+                )
     return path
 
 
@@ -345,6 +395,9 @@ def load_validated_pilot_page(
         text=text,
         artifact_kind=record["selected_artifact"],
         quality_verdict=record["quality_verdict"],
+        parser_name=record["parser_name"],
+        parser_version=record["parser_version"],
+        extraction_mode=record["extraction_mode"],
         correction_manifest=correction_manifest,
     )
 
@@ -357,4 +410,12 @@ def load_validated_pilot_pages(
     if errors:
         raise PilotArtifactError("pilot_batch_incomplete", "; ".join(errors))
     assert isinstance(records, (list, tuple))
+    metadata_errors: list[str] = []
+    for index, record in enumerate(records):
+        for error in validate_pilot_artifact_record(record):
+            metadata_errors.append(f"records[{index}].{error}")
+    if metadata_errors:
+        raise PilotArtifactError(
+            "invalid_artifact_metadata", "; ".join(metadata_errors)
+        )
     return tuple(load_validated_pilot_page(root, record) for record in records)

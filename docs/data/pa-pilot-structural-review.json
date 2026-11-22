@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "metadata-only-structural-review",
+  "input_chunk_artifact": "C:\\Users\\steve\\Documents\\PayerPolicyLibrary\\pilot-pa\\text-quality-pilot-20261108\\chunking-pilot-20261122T160000Z\\chunks.json",
+  "input_chunk_count": 12,
+  "page_count": 12,
+  "cross_page_chunk_count": 0,
+  "structure_kind_counts": {
+    "list": 4,
+    "paragraph": 8
+  },
+  "pages": [
+    {
+      "source_id": "pa-amendments-2025",
+      "page_number": 1,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-amendments-2025",
+      "page_number": 6,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-amendments-2025",
+      "page_number": 11,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "list"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 1,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-amendments-2025",
+      "page_number": 16,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-certificate-2025",
+      "page_number": 1,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-certificate-2025",
+      "page_number": 56,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "list"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 1,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-certificate-2025",
+      "page_number": 110,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "list"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 1,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-certificate-2025",
+      "page_number": 165,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-empire-plan-report-2026",
+      "page_number": 1,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-empire-plan-report-2026",
+      "page_number": 5,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "list"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 1,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-empire-plan-report-2026",
+      "page_number": 8,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    },
+    {
+      "source_id": "pa-empire-plan-report-2026",
+      "page_number": 12,
+      "chunk_count": 1,
+      "structure_kinds": [
+        "paragraph"
+      ],
+      "unknown_blocks": 0,
+      "table_blocks": 0,
+      "list_blocks": 0,
+      "heading_blocks": 0,
+      "page_boundary_check": "pass"
+    }
+  ],
+  "automated_checks": {
+    "page_boundaries": "pass",
+    "exact_text_reconstruction": "verified_by_chunking_run",
+    "unknown_structure_preserved": "pass",
+    "human_visual_signoff": "not_reviewed"
+  },
+  "limitations": [
+    "This report contains metadata only and no policy text.",
+    "Structure labels are deterministic heuristics, not human sign-off.",
+    "A one-chunk page result does not prove finer segmentation is unnecessary."
+  ]
+}
