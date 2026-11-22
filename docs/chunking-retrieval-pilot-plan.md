@@ -1,14 +1,12 @@
 # Bounded chunking and retrieval pilot
 
-Status: **Slice 2A implemented; pilot not complete**.
+Status: **Slice 5 characterization implemented; pilot not complete**.
 
-Implemented so far: the first pure validator in
-`payer_policy/pilot_inputs.py`, plus complete twelve-page manifest validation.
-On-disk artifact verification now validates text hashes, safe paths, UTF-8,
-corrected-view provenance, and complete-batch loading with focused synthetic
-tests. Deterministic page-block segmentation now preserves exact text spans and
-labels conservative heading, paragraph, list, table, and unknown structures.
-Chunk packing, retrieval, and evaluation remain unimplemented.
+Implemented so far: complete twelve-page manifest validation, corrected-view
+provenance verification, deterministic page-block segmentation, protected-block
+packing, local chunk-artifact writing, deterministic lexical retrieval, and a
+small evaluation runner. The pilot remains exploratory and has not approved
+production indexing, embeddings, hosted retrieval, or answer generation.
 
 ## Purpose
 
@@ -48,10 +46,16 @@ existing derived artifacts remain read-only inputs.
   retrieval quality.
 - Publishing policy text to Git, chat, telemetry, or an external service.
 
-## Proposed input contract
+## Input contract
 
-The pilot will consume a local manifest assembled from the completed text-quality
-review. Each entry must identify:
+The pilot consumes the checked-in metadata-only manifest
+`docs/data/pa-pilot-chunking-manifest.json` with a caller-selected local pilot
+root. The current characterization output is stored outside Git under
+`chunking-pilot-20261122T142619Z/`; the retrieval characterization report is
+under `retrieval-evaluation-20261122T143024Z/`. Neither artifact copies policy
+text into the repository.
+
+Each entry must identify:
 
 - stable document/source ID;
 - retrieval ID and original PDF SHA-256;
@@ -70,7 +74,7 @@ but unavailable.
 The manifest is a control plane, not a copy of the policy. Detailed text remains
 outside Git in the local pilot library.
 
-## Proposed chunk contract
+## Chunk contract
 
 Each emitted chunk will contain at least:
 
@@ -103,7 +107,7 @@ content remain as supplied by the selected raw or corrected derived artifact.
 The corrected view is an input choice recorded in provenance, not a replacement
 of raw evidence.
 
-## Proposed retrieval contract
+## Retrieval contract
 
 The first retrieval baseline will be deterministic lexical ranking over the
 pilot chunks. It will:
@@ -206,44 +210,76 @@ Implemented module: `payer_policy/chunking.py`.
 embedding layout assumptions into a production abstraction before the sample is
 understood.
 
-### Slice 2B — protected-block chunk packing (planned)
+### Slice 2B — protected-block chunk packing
 
-Add the explicit 400–700-word, zero-overlap packing policy only after Slice 2A
-passes independent review. This later slice will keep headings, lists, and
-table-like blocks together where possible and record any safe oversized-block
-split.
+Implemented module: `payer_policy/chunk_packing.py`.
 
-### Slice 3 — chunk preview and structural review artifact
+- Pack whole page blocks toward a 550-word soft target and 700-word maximum.
+- Keep headings with following content when the pair fits.
+- Preserve lists and table-like blocks as indivisible blocks.
+- Mark oversized blocks instead of splitting them.
+- Emit immutable chunks with stable IDs, ordinals, exact offsets, line ranges,
+  word counts, structure labels, and source/page/hash provenance.
+- Reject malformed, overlapping, non-contiguous, or non-reconstructing blocks.
 
-Proposed local report writer, likely alongside `chunking.py`.
+The approved twelve-page characterization run produced one page-local chunk for
+each page, with four pages using corrected-derived text. The current extracted
+sample contains no blank-line block boundaries, so the packer correctly preserves
+those pages as whole blocks rather than inventing finer structure.
 
-- Produce metadata-only repository reports and detailed local previews.
-- Show each chunk's source/page/ordinal and structure labels.
-- Record reviewer verdicts for headings, lists, tables, page boundaries, and
-  suspicious splits.
+**Why:** whole-block packing protects evidence and citation boundaries while
+making the current extraction limitation visible instead of hiding it behind
+aggressive layout reconstruction.
 
-**Why:** retrieval scores cannot reveal that a heading was separated from its
-section or that a table was split incorrectly.
+### Slice 3 — chunk artifact and structural review output
+
+Implemented modules: `payer_policy/chunk_artifacts.py` and
+`payer_policy/chunking.py`.
+
+- Serialize exact chunk text with complete source/page/hash provenance.
+- Bind the artifact to the input-manifest SHA-256.
+- Refuse overwriting an existing artifact.
+- Verify exact page reconstruction before artifact creation.
+- Keep detailed artifacts outside Git and retain only metadata summaries.
+- Validate every chunk record on load, including provenance, offsets, line ranges,
+  block labels, word counts, and duplicate identities.
+- Save the metadata-only structural review at
+  `docs/data/pa-pilot-structural-review.json`.
+
+A real twelve-page characterization produced twelve page-local chunks from
+twelve conservative blocks. Five pages use corrected-derived text. The sample
+has no blank-line boundaries, so the current result intentionally preserves each
+page as one chunk rather than inventing finer structure.
+
+**Why:** a durable, inspectable artifact makes source changes and boundary
+mistakes detectable before retrieval is measured.
 
 ### Slice 4 — lexical retrieval baseline
 
-Proposed module: `payer_policy/retrieval_pilot.py`.
+Implemented module: `payer_policy/retrieval_pilot.py`.
 
 - Build an in-memory index from validated chunks.
 - Rank with deterministic term overlap and document-frequency weighting.
 - Return stable, provenance-complete hits.
-- Reject malformed indexes, duplicate chunk IDs, and queries with invalid types.
+- Return no hits for absent evidence.
+- Reject malformed indexes, duplicate chunk IDs, and invalid query limits.
 
-**Why:** this establishes a low-dependency baseline and isolates chunking and
+A local lexical baseline is preferred because it isolates chunking and
 provenance behavior from embedding-model behavior.
 
 ### Slice 5 — evaluation runner and report
 
-- Load the reviewed query set.
-- Run every query without retries or hidden query rewriting.
-- Compute the declared metrics and preserve per-query results.
-- Verify that every reported citation resolves to the exact source/page/chunk
-  used by the hit.
+Implemented module: `payer_policy/evaluation.py`.
+
+- Validate answerable and deliberate no-evidence query records.
+- Run every query once without hidden rewriting.
+- Compute Recall@1, Recall@3, citation accuracy that checks both expected
+  chunk identity and expected source/physical page, and no-evidence accuracy.
+- Preserve per-query retrieved and expected chunk IDs.
+
+A four-query local characterization run achieved 1.0 for all declared metrics.
+This is a deterministic smoke test, not a human-reviewed policy question set
+or a production quality threshold.
 
 **Why:** an auditable per-query report is more useful than a single score for a
 small exploratory sample.
@@ -274,7 +310,10 @@ The pilot can be marked complete only when all of the following have evidence:
 - every input page is reconciled to the approved text-quality manifest;
 - raw and corrected-derived artifacts remain unchanged and separately stored;
 - chunk artifacts round-trip and preserve exact selected text;
-- all chunks have source, retrieval, hash, physical-page, and ordinal metadata;
+- all chunks have source, retrieval, hash, parser, extraction-mode,
+  physical-page, and ordinal metadata;
+- the metadata-only structural review records headings, lists, table-like blocks,
+  unknown blocks, and page-boundary results;
 - headings, lists, and table-like blocks receive an explicit preservation
   verdict, including `unknown` where the extraction cannot prove structure;
 - no chunk crosses a document or physical-page boundary;
@@ -305,7 +344,7 @@ Use the repository's RED/GREEN workflow one behavior at a time:
 Use standard-library `unittest` and existing project dependencies first. Do not
 add an embedding package, vector database, or provider SDK for this pilot.
 
-## Decisions requested before implementation
+## Approved scope decisions
 
 1. Approve the twelve-page reviewed sample as the complete pilot input.
 2. Approve page-local chunks that never cross physical-page boundaries.
@@ -317,5 +356,5 @@ add an embedding package, vector database, or provider SDK for this pilot.
 6. Approve the proposed evaluation cases and metrics as exploratory evidence,
    not production thresholds.
 
-No chunk packing, dependency installation, indexing, or external publication is
-included in this increment.
+No answer-generation component, embedding dependency, hosted index, or external
+publication is included in the implemented slices.

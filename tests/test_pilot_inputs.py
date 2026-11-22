@@ -27,6 +27,9 @@ def approved_manifest() -> list[dict[str, object]]:
                 ),
                 "selected_artifact": "raw",
                 "quality_verdict": "usable",
+                "parser_name": "pypdf",
+                "parser_version": "6.19.0",
+                "extraction_mode": "text",
             })
     return records
 
@@ -53,6 +56,9 @@ def artifact_record(
         "selected_text_artifact": selected_path,
         "selected_text_sha256": hashlib.sha256(selected).hexdigest(),
         "quality_verdict": "usable",
+        "parser_name": "pypdf",
+        "parser_version": "6.19.0",
+        "extraction_mode": "text",
     }
     if corrected:
         record.update({
@@ -77,6 +83,9 @@ class PilotPageRecordTests(unittest.TestCase):
             "raw_artifact": "page-text/pa-certificate-2025/page-001.txt",
             "selected_artifact": "raw",
             "quality_verdict": "usable",
+            "parser_name": "pypdf",
+            "parser_version": "6.19.0",
+            "extraction_mode": "text",
         }
         self.assertEqual(validate_pilot_page_record(record), [])
 
@@ -92,6 +101,9 @@ class PilotPageRecordTests(unittest.TestCase):
             "raw_artifact": "page-text/pa-certificate-2025/page-002.txt",
             "selected_artifact": "raw",
             "quality_verdict": "usable",
+            "parser_name": "pypdf",
+            "parser_version": "6.19.0",
+            "extraction_mode": "text",
         }
         errors = validate_pilot_page_record(record)
         self.assertTrue(any("page_number" in error for error in errors))
@@ -108,6 +120,9 @@ class PilotPageRecordTests(unittest.TestCase):
             "raw_artifact": "page-text/pa-certificate-2025/page-001.txt",
             "selected_artifact": "raw",
             "quality_verdict": "usable",
+            "parser_name": "pypdf",
+            "parser_version": "6.19.0",
+            "extraction_mode": "text",
         }
         errors = validate_pilot_page_record(record)
         self.assertTrue(any("page_number" in error for error in errors))
@@ -223,6 +238,9 @@ class PilotArtifactTests(unittest.TestCase):
                     "selected_text_artifact": relative,
                     "selected_text_sha256": digest,
                     "quality_verdict": "usable",
+                    "parser_name": "pypdf",
+                    "parser_version": "6.19.0",
+                    "extraction_mode": "text",
                 })
         return records
 
@@ -397,6 +415,15 @@ class PilotArtifactTests(unittest.TestCase):
                 "page_number": record["page_number"],
                 "raw_text_sha256": record["raw_text_sha256"],
                 "selected_text_sha256": record["selected_text_sha256"],
+                "correction_count": 1,
+                "corrections": [{
+                    "offset": 1,
+                    "operation_index": 2,
+                    "item_index": 1,
+                    "adjustment": 124,
+                }],
+                "raw_preserved": True,
+                "pdf_overwritten": False,
             }
             self.write_artifact(
                 root, str(record["correction_manifest"]),
@@ -424,6 +451,82 @@ class PilotArtifactTests(unittest.TestCase):
                 "page_number": 2,
                 "raw_text_sha256": record["raw_text_sha256"],
                 "selected_text_sha256": record["selected_text_sha256"],
+                "correction_count": 1,
+                "corrections": [{
+                    "offset": 1,
+                    "operation_index": 2,
+                    "item_index": 1,
+                    "adjustment": 124,
+                }],
+                "raw_preserved": True,
+                "pdf_overwritten": False,
+            }
+            self.write_artifact(
+                root, str(record["correction_manifest"]),
+                json.dumps(manifest).encode("utf-8"),
+            )
+            with self.assertRaises(PilotArtifactError) as caught:
+                load_validated_pilot_page(root, record)
+        self.assertEqual(
+            caught.exception.code, "correction_provenance_mismatch")
+
+    def test_rejects_grouped_corrected_view_manifest(self) -> None:
+        """Reject grouped evidence without page-bound correction records."""
+        from payer_policy.pilot_inputs import (
+            PilotArtifactError, load_validated_pilot_page,
+        )
+
+        record, raw, selected = artifact_record(corrected=True)
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            self.write_artifact(root, str(record["raw_artifact"]), raw)
+            self.write_artifact(
+                root, str(record["selected_text_artifact"]), selected)
+            manifest = {
+                "status": "corrected-derived-view-created",
+                "source_pdf_sha256": record["sha256"],
+                "retrieval_id": record["retrieval_id"],
+                "correction_count": 1,
+                "pages_corrected": [record["page_number"]],
+                "correction_offsets": [1],
+                "operation_indexes": [2],
+                "item_indexes": [1],
+                "adjustments": [124],
+                "raw_preserved": True,
+                "pdf_overwritten": False,
+            }
+            self.write_artifact(
+                root, str(record["correction_manifest"]),
+                json.dumps(manifest).encode("utf-8"),
+            )
+            with self.assertRaises(PilotArtifactError) as caught:
+                load_validated_pilot_page(root, record)
+        self.assertEqual(
+            caught.exception.code, "correction_provenance_mismatch")
+    def test_rejects_incomplete_grouped_correction_evidence(self) -> None:
+        """Reject grouped manifests whose evidence arrays do not align."""
+        from payer_policy.pilot_inputs import (
+            PilotArtifactError, load_validated_pilot_page,
+        )
+
+        record, raw, selected = artifact_record(corrected=True)
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            self.write_artifact(root, str(record["raw_artifact"]), raw)
+            self.write_artifact(
+                root, str(record["selected_text_artifact"]), selected)
+            manifest = {
+                "status": "corrected-derived-view-created",
+                "source_pdf_sha256": record["sha256"],
+                "retrieval_id": record["retrieval_id"],
+                "correction_count": 2,
+                "pages_corrected": [record["page_number"]],
+                "correction_offsets": [1],
+                "operation_indexes": [2],
+                "item_indexes": [1],
+                "adjustments": [124],
+                "raw_preserved": True,
+                "pdf_overwritten": False,
             }
             self.write_artifact(
                 root, str(record["correction_manifest"]),
@@ -445,6 +548,22 @@ class PilotArtifactTests(unittest.TestCase):
         self.assertEqual(len(pages), 12)
         self.assertEqual(pages[0].page_number, 1)
         self.assertEqual(pages[-1].page_number, 12)
+
+    def test_rejects_complete_batch_with_invalid_artifact_metadata(
+            self,
+    ) -> None:
+        """Reject metadata errors before opening any selected artifact."""
+        from payer_policy.pilot_inputs import (
+            PilotArtifactError, load_validated_pilot_pages,
+        )
+
+        with TemporaryDirectory() as name:
+            root = Path(name)
+            records = self.approved_artifact_manifest(root)
+            del records[0]["selected_text_sha256"]
+            with self.assertRaises(PilotArtifactError) as caught:
+                load_validated_pilot_pages(root, records)
+        self.assertEqual(caught.exception.code, "invalid_artifact_metadata")
 
     def test_rejects_incomplete_batch_before_loading_files(self) -> None:
         """Reject a partial page set instead of returning partial facts."""

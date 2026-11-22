@@ -136,10 +136,10 @@ it does not imply that a packaged application exists.
 | `acquire_pdf_candidate()` | Check explicit approval, fetch one candidate, validate and save exact bytes | Implemented and offline-verified; independent code review passed; only the specific PA pilot approved |
 | Browser UI + local API | Library browsing, document review, and questions | Planned |
 | Originals + provenance | Original documents, versions, source URLs, and applicability | Planned |
-| Extraction + review | PDF/HTML processing, OCR, and corrections | Planned |
-| Chunks + embeddings | Prepare searchable content independently of the answering model | Planned |
-| Local search stores | SQLite and an embedded vector index | Planned |
-| Retrieval + citations | Scope/date filtering and supporting evidence | Planned |
+| Extraction + review | PDF/HTML processing, OCR, and corrections | Bounded PA selected-page extraction, reviewed corrected views, and text-quality pilot implemented; OCR and broader processing planned |
+| Chunks + embeddings | Prepare searchable content independently of the answering model | Deterministic page-local chunking and local JSON chunk artifacts implemented for the PA pilot; embeddings planned |
+| Local search stores | SQLite and an embedded vector index | Pilot chunk artifacts are local JSON; database and vector stores planned |
+| Retrieval + citations | Scope/date filtering and supporting evidence | Deterministic lexical retrieval and pilot evaluation implemented; production filters and answer citations planned |
 | Answer adapters | Connect local Ollama or cloud models | Planned |
 | Cloud model providers | Optional external inference with explicit consent | Planned |
 | Cross-cutting services | Installer, credentials, job recovery, backup, and evaluation | Planned |
@@ -210,9 +210,10 @@ verification; independent review passed after an error-classification fix.
 The original API remains
 in-process, and Job Objects alone are not a permissions sandbox. Text-layer
 inspection was outside that inspection increment. A separate synthetic-only
-[extraction increment](text-extraction.md) now adds selected-page text and
-derived storage; synthetic verification and independent review passed. Real-policy text
-processing and unattended ingestion remain outside the approved scope.
+[extraction increment](text-extraction.md) added selected-page text and derived
+storage. The bounded PA text-quality gate and twelve-page chunking/retrieval
+pilot now exercise reviewed external artifacts through separate provenance
+manifests; this does not authorize document-wide ingestion or production search.
 The single-source coordinator is implemented and offline-verified; independent
 code review passed with no blockers. Live acquisition needs its own approval
 and evidence of
