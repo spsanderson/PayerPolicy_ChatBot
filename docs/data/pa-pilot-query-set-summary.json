@@ -21,6 +21,14 @@
   "human_signoff": true,
   "reviewed_at": "2026-11-22",
   "validation": "passed",
+  "evaluation_report_path": "C:\\Users\\steve\\Documents\\PayerPolicyLibrary\\pilot-pa\\text-quality-pilot-20261108\\retrieval-evaluation-20261122T143024Z\\human-reviewed-evaluation.json",
+  "evaluation_report_sha256": "cf563b23c735c69f180d6bc59eb30de5da02389b04b27485b063f15d6b633949",
+  "metrics": {
+    "recall_at_1": 0.4,
+    "recall_at_3": 1.0,
+    "citation_accuracy": 0.4,
+    "no_evidence_accuracy": 0.0
+  },
   "limitations": [
     "The query text is stored outside Git as a local derived artifact.",
     "This set covers only the approved twelve-page sample."

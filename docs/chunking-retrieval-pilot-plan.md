@@ -1,6 +1,6 @@
 # Bounded chunking and retrieval pilot
 
-Status: **query-set draft prepared; human review pending**.
+Status: **human-reviewed evaluation complete; pilot not complete**.
 
 Implemented so far: complete twelve-page manifest validation, corrected-view
 provenance verification, deterministic page-block segmentation, protected-block
@@ -296,13 +296,15 @@ Implemented module: `payer_policy/query_set.py`.
 - Keep query text in a local derived artifact and retain only a metadata summary
   in Git.
 
-A twelve-query draft was validated locally: ten answerable queries and two
-no-evidence queries across the three approved documents. Human review and final
-metrics remain pending.
+The twelve-query set was human approved: ten answerable queries and two
+no-evidence queries across the three approved documents. The final bounded
+lexical evaluation reported Recall@1 0.4, Recall@3 1.0, citation accuracy 0.4,
+and no-evidence accuracy 0.0. These results show that the baseline often finds
+the expected chunk within the top three but does not reliably rank it first and
+incorrectly returns hits for both no-evidence queries.
 
-**Why:** the four earlier characterization queries demonstrate pipeline wiring,
-not retrieval quality. Human review is required to establish whether each query
-is answerable and whether its expected citation is correct.
+**Why:** the reviewed evaluation exposes retrieval and chunk-granularity limits
+without converting a small exploratory result into a production quality claim.
 
 ## Failure boundaries
 
