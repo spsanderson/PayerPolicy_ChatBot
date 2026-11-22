@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "metadata-only-query-set-summary",
+  "query_set_path": "C:\\Users\\steve\\Documents\\PayerPolicyLibrary\\pilot-pa\\text-quality-pilot-20261108\\retrieval-evaluation-20261122T143024Z\\query-set-draft.json",
+  "query_set_sha256": "4e09ef22dc03a1299d0b4bc6de0bcf15bad1dd64ec1d040307e4ab1e6cbb7462",
+  "chunk_artifact_sha256": "64dba3ea08929b2fcd656cfce0bfc4709393839ef503d6e682180620b3085b7d",
+  "query_count": 12,
+  "answerable_count": 10,
+  "no_evidence_count": 2,
+  "category_counts": {
+    "amendment": 1,
+    "contact": 2,
+    "coverage": 1,
+    "definition": 1,
+    "list": 2,
+    "no_evidence": 2,
+    "numeric": 1,
+    "report": 2
+  },
+  "review_status": "human_approved",
+  "human_signoff": true,
+  "reviewed_at": "2026-11-22",
+  "validation": "passed",
+  "limitations": [
+    "The query text is stored outside Git as a local derived artifact.",
+    "This set covers only the approved twelve-page sample."
+  ]
+}

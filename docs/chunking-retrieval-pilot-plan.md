@@ -1,6 +1,6 @@
 # Bounded chunking and retrieval pilot
 
-Status: **Slice 5 characterization implemented; pilot not complete**.
+Status: **query-set draft prepared; human review pending**.
 
 Implemented so far: complete twelve-page manifest validation, corrected-view
 provenance verification, deterministic page-block segmentation, protected-block
@@ -283,6 +283,26 @@ or a production quality threshold.
 
 **Why:** an auditable per-query report is more useful than a single score for a
 small exploratory sample.
+
+### Slice 6 — human-reviewed policy query set
+
+Implemented module: `payer_policy/query_set.py`.
+
+- Validate immutable answerable and deliberate no-evidence query records.
+- Bind expected citations to the approved chunk IDs, source IDs, and pages.
+- Bind the external query file to its expected SHA-256 before validation.
+- Track draft, human-approved, rejected, and revision-required statuses.
+- Fail closed before final evaluation unless every query is human approved.
+- Keep query text in a local derived artifact and retain only a metadata summary
+  in Git.
+
+A twelve-query draft was validated locally: ten answerable queries and two
+no-evidence queries across the three approved documents. Human review and final
+metrics remain pending.
+
+**Why:** the four earlier characterization queries demonstrate pipeline wiring,
+not retrieval quality. Human review is required to establish whether each query
+is answerable and whether its expected citation is correct.
 
 ## Failure boundaries
 
